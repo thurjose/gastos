@@ -257,6 +257,8 @@ label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
 .regras li code { font-family: ui-monospace, Menlo, Consolas, monospace; font-size: 13px; background: var(--page); padding: 2px 7px; border-radius: 6px; }
 .regra-form { display: grid; grid-template-columns: 1fr 1fr auto; gap: 8px; }
 @media (max-width: 440px) { .regra-form { grid-template-columns: 1fr 1fr; } .regra-form .botao { grid-column: span 2; } }
+.cat-edita { display: flex; gap: 8px; width: 100%; align-items: center; }
+.cat-edita input { flex: 1; }
 .pend { display: grid; gap: 6px; padding: 12px 0; border-bottom: 1px solid var(--hair); }
 .pend p { font-size: 13px; color: var(--ink-2); overflow-wrap: anywhere; }
 .pend .acoes { display: flex; gap: 14px; }
@@ -471,6 +473,15 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
     <div class="grade-resumo">
       <div class="coluna">
         <section class="cartao" id="c-pendencias" hidden></section>
+        <section class="cartao" aria-labelledby="t-cats">
+          <h2 id="t-cats">Categorias</h2>
+          <p class="ajuda" style="margin-bottom:12px">São as opções que aparecem pra escolher nos lançamentos, regras e metas. "Outros" é usada quando nada se encaixa e não pode ser removida.</p>
+          <form id="form-categoria" class="regra-form" style="grid-template-columns:1fr auto">
+            <input name="nome" placeholder="Nova categoria, ex.: Educação" maxlength="40" aria-label="Nova categoria" autocomplete="off">
+            <button type="submit" class="botao">Adicionar</button>
+          </form>
+          <ul class="lista" id="lista-cats"></ul>
+        </section>
         <section class="cartao">
           <h2>Cartão de crédito</h2>
           <form id="form-cartao" class="form-grade">
@@ -505,7 +516,7 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
           <p class="ajuda" style="margin-bottom:12px">Se a descrição contiver o texto, o lançamento ganha a categoria. Maiúsculas não importam.</p>
           <form id="form-regra" class="regra-form">
             <input name="padrao" placeholder="Texto, ex.: UBER" aria-label="Texto a procurar" autocomplete="off" required>
-            <input name="categoria" list="lista-categorias" placeholder="Categoria" aria-label="Categoria" autocomplete="off" required>
+            <select name="categoria" aria-label="Categoria" required></select>
             <button type="submit" class="botao">Adicionar</button>
           </form>
           <ul class="lista regras" id="lista-regras"></ul>
@@ -538,7 +549,6 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
   </button>
 </div>
 
-<datalist id="lista-categorias"></datalist>
 
 <!-- ======================= JANELA: LANÇAMENTO ======================= -->
 <dialog id="dlg-lanc" aria-labelledby="dlg-lanc-titulo">
@@ -553,7 +563,7 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
     </div>
     <label>Valor (R$) <input name="valor" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
     <label>Descrição <input name="descricao" maxlength="120" placeholder="Ex.: Padaria" autocomplete="off"></label>
-    <label>Categoria <input name="categoria" list="lista-categorias" placeholder="Em branco = automática pelas regras" autocomplete="off"></label>
+    <label>Categoria <select name="categoria"></select></label>
     <div class="duas">
       <label>Forma
         <select name="meio"><option value="pix">Pix</option><option value="credito">Crédito</option><option value="debito">Débito</option></select>
@@ -573,6 +583,14 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <button type="button" class="texto-link" id="btn-desfazer-parcela" hidden>Desfazer parcelamento</button>
     </div>
 
+    <!-- Repetir todo mês até uma data -->
+    <div class="caixa" id="caixa-repetir">
+      <label class="check" id="linha-repetir"><input type="checkbox" name="repetir"> Repetir todo mês</label>
+      <label id="campo-ate" hidden>Até (inclusive) <input type="date" name="repetir_ate"></label>
+      <p class="info-parcela" id="info-recorrencia" hidden></p>
+      <label class="check" id="linha-proximos" hidden><input type="checkbox" name="aplicar_proximos"> Aplicar as mudanças também aos próximos meses</label>
+    </div>
+
     <!-- Conta a receber (só saída) -->
     <div class="caixa" id="caixa-receber">
       <label class="check"><input type="checkbox" name="tem_receber"> Alguém vai me devolver parte disso</label>
@@ -585,6 +603,7 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
 
     <div class="botoes">
       <button type="button" class="perigo" id="btn-apagar" hidden>Apagar</button>
+      <button type="button" class="perigo" id="btn-apagar-prox" hidden>Apagar este e os próximos</button>
       <span class="espaco"></span>
       <button type="button" class="secundario" data-fechar>Cancelar</button>
       <button type="submit" class="botao" id="btn-salvar">Salvar</button>
@@ -1165,6 +1184,7 @@ function limparFiltros() {
 function elementoItem(l) {
   const selos = [];
   if (l.parcela_total) selos.push(h('span', { class: 'selo azul' }, `${l.parcela_num}/${l.parcela_total}`));
+  if (l.recorrencia_grupo) selos.push(h('span', { class: 'selo azul' }, 'mensal'));
   if (l.a_receber) selos.push(h('span', { class: 'selo' }, l.quitado ? 'devolvido' : [`${l.devedor || 'alguém'} deve `, R(l.a_receber)]));
   if (l.origem === 'importado') selos.push(h('span', { class: 'selo' }, 'importado'));
   const info = [categoriaDe(l), NOME_MEIO[l.meio] || l.meio, NOME_BANCO[l.banco], fmtHora.format(l.data)].filter(Boolean).join(' · ');
@@ -1251,16 +1271,111 @@ function desenharFatura() {
 /* =====================================================================
    ABA AJUSTES
    ===================================================================== */
-function todasCategorias() {
-  const c = new Set(CATEGORIAS_BASE);
-  for (const r of estado.regras) c.add(r.categoria);
-  for (const l of estado.todas) if (l.categoria) c.add(l.categoria);
-  for (const e of ESPECIAIS) c.delete(e);
-  return [...c].sort((a, b) => a.localeCompare(b, 'pt-BR'));
+// Lista de categorias do usuário (fica em config.categorias, sincroniza entre aparelhos)
+const comOutrosNoFim = (arr) => [...new Set(arr.map((c) => String(c).trim()).filter((c) => c && c !== 'Outros' && !ESPECIAIS.includes(c))), 'Outros'];
+function categoriasDoUsuario() {
+  const salvo = estado.config.get('categorias');
+  if (salvo) {
+    try { const arr = JSON.parse(salvo); if (Array.isArray(arr) && arr.length) return comOutrosNoFim(arr); } catch { /* valor inválido: usa o padrão */ }
+  }
+  // Ainda não configurou: começa com as padrão + as que já existem nas regras e lançamentos
+  return comOutrosNoFim([...CATEGORIAS_BASE, ...estado.regras.map((r) => r.categoria), ...estado.todas.map((l) => l.categoria).filter(Boolean)]);
+}
+const todasCategorias = categoriasDoUsuario;
+async function salvarCategorias(lista) {
+  const valor = JSON.stringify(comOutrosNoFim(lista));
+  const { error } = await sb.from('config').upsert({ chave: 'categorias', valor });
+  if (error) throw error;
+  estado.config.set('categorias', valor);
+}
+// Monta as opções dos campos de categoria (lançamento e regra)
+function opcoesCategoria(select, { atual = '', comAutomatica = false, comEspeciais = false } = {}) {
+  const cats = categoriasDoUsuario();
+  const grupos = [];
+  if (comAutomatica) grupos.push(h('option', { value: '' }, 'Automática (pelas regras)'));
+  grupos.push(h('optgroup', { label: 'Suas categorias' }, cats.map((c) => h('option', { value: c }, c))));
+  if (comEspeciais) grupos.push(h('optgroup', { label: 'Especiais' }, ESPECIAIS.map((c) => h('option', { value: c }, c))));
+  // lançamento antigo com categoria que não existe mais: mostra pra não perder
+  if (atual && !cats.includes(atual) && !ESPECIAIS.includes(atual)) grupos.push(h('optgroup', { label: 'Removida' }, h('option', { value: atual }, atual)));
+  select.replaceChildren(...grupos);
+  select.value = atual || (comAutomatica ? '' : cats[0]);
 }
 function atualizarSugestoesCategoria() {
-  $('lista-categorias').replaceChildren(...[...todasCategorias(), ...ESPECIAIS].map((c) => h('option', { value: c })));
+  opcoesCategoria($('form-regra').elements.categoria, { atual: $('form-regra').elements.categoria.value });
 }
+
+/* ---------- Ajustes > Categorias ---------- */
+function desenharCategoriasAjuste() {
+  const uso = new Map();
+  for (const l of estado.todas) uso.set(categoriaDe(l), (uso.get(categoriaDe(l)) || 0) + 1);
+  $('lista-cats').replaceChildren(...categoriasDoUsuario().map((cat) => {
+    const li = h('li', {});
+    const n = uso.get(cat) || 0;
+    const info = h('div', {}, h('p', { class: 't' }, cat), h('p', { class: 's' }, n ? `${n} lançamento(s) recentes` : 'sem lançamentos recentes'));
+    if (cat === 'Outros') li.append(info, h('span', { class: 'sub' }, 'padrão'));
+    else li.append(info, h('div', { style: 'display:flex;gap:14px;flex:none' },
+      h('button', { class: 'texto-link', onclick: () => editarCategoria(li, cat) }, 'Renomear'),
+      h('button', { class: 'perigo', onclick: (ev) => removerCategoria(cat, ev.currentTarget, info) }, 'Remover')));
+    return li;
+  }));
+}
+function editarCategoria(li, antiga) {
+  const input = h('input', { value: antiga, maxLength: 40, 'aria-label': `Novo nome para ${antiga}` });
+  const salvar = async () => {
+    const nova = input.value.trim();
+    if (!nova || nova === antiga) return desenharCategoriasAjuste();
+    const cats = categoriasDoUsuario();
+    if (cats.some((c) => normalizar(c) === normalizar(nova)) || ESPECIAIS.some((c) => normalizar(c) === normalizar(nova))) return avisar('Já existe uma categoria com esse nome.', true);
+    try {
+      // Renomeia em tudo: lançamentos (inclusive os antigos), regras e meta
+      const r1 = await sb.from('gastos').update({ categoria: nova }).eq('categoria', antiga); if (r1.error) throw r1.error;
+      const r2 = await sb.from('regras_categoria').update({ categoria: nova }).eq('categoria', antiga); if (r2.error) throw r2.error;
+      if (estado.metas.has(antiga)) {
+        const r3 = await sb.from('metas').upsert({ escopo: nova, valor: estado.metas.get(antiga) }); if (r3.error) throw r3.error;
+        const r4 = await sb.from('metas').delete().eq('escopo', antiga); if (r4.error) throw r4.error;
+      }
+      await salvarCategorias(cats.map((c) => (c === antiga ? nova : c)));
+      avisar(`"${antiga}" agora se chama "${nova}"`);
+      carregar();
+    } catch (e) { avisar('Não deu pra renomear: ' + e.message, true); }
+  };
+  input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); salvar(); } if (ev.key === 'Escape') desenharCategoriasAjuste(); });
+  li.replaceChildren(h('div', { class: 'cat-edita' }, input,
+    h('button', { class: 'botao', style: 'padding:10px 14px', onclick: salvar }, 'Salvar'),
+    h('button', { class: 'texto-link', onclick: desenharCategoriasAjuste }, 'Cancelar')));
+  input.focus();
+  input.select();
+}
+async function removerCategoria(cat, botao, info) {
+  // 1º toque explica o que acontece; 2º confirma
+  if (!botao.dataset.confirmar) {
+    botao.dataset.confirmar = '1';
+    botao.textContent = 'Confirmar';
+    info.querySelector('.s').textContent = 'Os lançamentos dela vão pra "Outros" e as regras e a meta dela são apagadas.';
+    return;
+  }
+  try {
+    const r1 = await sb.from('gastos').update({ categoria: 'Outros' }).eq('categoria', cat); if (r1.error) throw r1.error;
+    const r2 = await sb.from('regras_categoria').delete().eq('categoria', cat); if (r2.error) throw r2.error;
+    const r3 = await sb.from('metas').delete().eq('escopo', cat); if (r3.error) throw r3.error;
+    await salvarCategorias(categoriasDoUsuario().filter((c) => c !== cat));
+    avisar(`Categoria "${cat}" removida`);
+    carregar();
+  } catch (e) { avisar('Não deu pra remover: ' + e.message, true); }
+}
+$('form-categoria').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const nome = ev.target.elements.nome.value.trim();
+  if (!nome) return;
+  const cats = categoriasDoUsuario();
+  if (cats.some((c) => normalizar(c) === normalizar(nome)) || ESPECIAIS.some((c) => normalizar(c) === normalizar(nome))) return avisar('Essa categoria já existe.', true);
+  try {
+    await salvarCategorias([...cats.filter((c) => c !== 'Outros'), nome]);
+    ev.target.reset();
+    avisar(`Categoria "${nome}" criada`);
+    desenhar();
+  } catch (e) { avisar('Não deu pra criar: ' + e.message, true); }
+});
 const valorCampo = (v) => (v ? Number(v).toFixed(2).replace('.', ',') : '');
 
 function desenharAjustes() {
@@ -1272,7 +1387,8 @@ function desenharAjustes() {
   $('form-metas').elements.total.value = valorCampo(estado.metas.get('total'));
   $('metas-categorias').replaceChildren(...todasCategorias().map((cat) => h('label', { class: 'linha-campo' },
     h('span', {}, cat), h('input', { name: 'cat:' + cat, inputMode: 'decimal', placeholder: 'Sem meta', autocomplete: 'off', value: valorCampo(estado.metas.get(cat)) }))));
-  // Regras
+  // Categorias e regras
+  desenharCategoriasAjuste();
   desenharRegras();
   // Privacidade e conta
   $('chk-privado').checked = document.body.classList.contains('privado');
@@ -1392,7 +1508,18 @@ function atualizarCamposDialogo() {
   const f = formLanc.elements;
   const saida = f.tipo.value === 'saida';
   const parcelado = !!editando?.parcela_total;
-  $('caixa-parcelas').hidden = !(saida && f.meio.value === 'credito');
+  const recorrente = !!editando?.recorrencia_grupo;
+  // Parcelar e repetir todo mês não combinam: um esconde o outro
+  $('caixa-parcelas').hidden = !(saida && f.meio.value === 'credito') || f.repetir.checked || recorrente;
+  $('caixa-repetir').hidden = parcelado || Number(f.parcelas.value) > 1;
+  $('linha-repetir').hidden = recorrente;
+  $('campo-ate').hidden = recorrente || !f.repetir.checked;
+  $('info-recorrencia').hidden = !recorrente;
+  $('linha-proximos').hidden = !recorrente;
+  if (recorrente) {
+    const ultima = estado.todas.filter((x) => x.recorrencia_grupo === editando.recorrencia_grupo).reduce((m, x) => (x.data > m ? x.data : m), editando.data);
+    $('info-recorrencia').textContent = `Lançamento mensal, repete até ${fmtData.format(ultima)}.`;
+  }
   f.parcelas.closest('label').hidden = parcelado;
   $('info-parcela').hidden = !parcelado;
   $('btn-desfazer-parcela').hidden = !parcelado;
@@ -1401,7 +1528,7 @@ function atualizarCamposDialogo() {
   $('campos-receber').hidden = !f.tem_receber.checked;
   $('linha-quitado').hidden = !f.tem_receber.checked || !editando?.a_receber;
 }
-for (const n of ['tipo', 'meio', 'tem_receber']) {
+for (const n of ['tipo', 'meio', 'tem_receber', 'repetir', 'parcelas']) {
   for (const el of document.querySelectorAll(`#form-lanc [name="${n}"]`)) el.addEventListener('change', () => {
     if (n === 'tem_receber' && formLanc.elements.tem_receber.checked && !formLanc.elements.a_receber.value) {
       const v = lerValor(formLanc.elements.valor.value);
@@ -1425,7 +1552,7 @@ function abrirLancamento(l = null, sugestao = null) {
   f.tipo.value = base.tipo || 'saida';
   f.valor.value = base.valor != null ? (typeof base.valor === 'number' ? valorCampo(base.valor) : String(base.valor)) : '';
   f.descricao.value = base.descricao || '';
-  f.categoria.value = l?.categoria || '';
+  opcoesCategoria(f.categoria, { atual: l?.categoria || '', comAutomatica: true, comEspeciais: true });
   f.meio.value = l?.meio || (estado.aba === 'fatura' ? 'credito' : estado.meio || 'pix');
   f.banco.value = l?.banco || estado.banco || '';
   f.quando.value = paraCampoData(base.data || new Date());
@@ -1434,6 +1561,14 @@ function abrirLancamento(l = null, sugestao = null) {
   f.a_receber.value = valorCampo(l?.a_receber);
   f.devedor.value = l?.devedor || '';
   f.quitado.checked = !!l?.quitado;
+  f.repetir.checked = false;
+  f.aplicar_proximos.checked = false;
+  f.repetir_ate.value = chaveDia(somarMeses(base.data || new Date(), 11));   // sugestão: 12 meses
+  const prox = $('btn-apagar-prox');
+  prox.hidden = !l?.recorrencia_grupo;
+  prox.textContent = 'Apagar este e os próximos';
+  delete prox.dataset.confirmar;
+  if (l?.recorrencia_grupo) apagar.textContent = 'Apagar só este';
   atualizarCamposDialogo();
   $('dlg-lanc').showModal();
   if (!l) f.valor.focus();
@@ -1446,6 +1581,8 @@ formLanc.addEventListener('submit', async (ev) => {
   if (!valor) return avisar('Valor inválido. Use, por exemplo, 12,90.', true);
   if (!f.descricao.value.trim()) return avisar('Preencha a descrição.', true);
   if (!f.quando.value) return avisar('Preencha a data e a hora.', true);
+  if (f.repetir.checked && !editando?.recorrencia_grupo && (!f.repetir_ate.value || f.repetir_ate.value <= f.quando.value.slice(0, 10)))
+    return avisar('Escolha até quando repetir (uma data depois do lançamento).', true);
   const saida = f.tipo.value === 'saida';
   let aReceber = null;
   if (saida && f.tem_receber.checked) {
@@ -1475,11 +1612,20 @@ formLanc.addEventListener('submit', async (ev) => {
       }
       const n = Number(f.parcelas.value);
       if (!editando.parcela_total && n > 1 && registro.meio === 'credito' && saida) await parcelar(editando.id, n);
+      // Mensal: leva valor/descrição/categoria/forma/banco pros meses seguintes
+      if (editando.recorrencia_grupo && f.aplicar_proximos.checked) {
+        const { tipo, valor: v, descricao, categoria, meio, banco } = registro;
+        const { error: e3 } = await sb.from('gastos').update({ tipo, valor: v, descricao, categoria, meio, banco })
+          .eq('recorrencia_grupo', editando.recorrencia_grupo).gt('criado_em', editando.criado_em);
+        if (e3) throw e3;
+      }
+      if (!editando.recorrencia_grupo && !editando.parcela_total && f.repetir.checked) await repetirMensal(editando.id, f.repetir_ate.value);
     } else {
       const { data, error } = await sb.from('gastos').insert({ ...registro, origem: 'manual' }).select('id').single();
       if (error) throw error;
       const n = Number(f.parcelas.value);
       if (n > 1 && registro.meio === 'credito' && saida) await parcelar(data.id, n);
+      else if (f.repetir.checked) await repetirMensal(data.id, f.repetir_ate.value);
       if (pendenciaOrigem) await sb.from('pix_nao_reconhecido').delete().eq('id', pendenciaOrigem);
     }
     $('dlg-lanc').close();
@@ -1509,6 +1655,34 @@ async function parcelar(id, n) {
   const { error: e2 } = await sb.from('gastos').insert(resto);
   if (e2) throw e2;
 }
+
+// Cria cópias mensais (mesmo dia, mesmo valor) até a data escolhida — no máximo 10 anos
+async function repetirMensal(id, ateChave) {
+  const { data: l, error } = await sb.from('gastos').select('*').eq('id', id).single();
+  if (error) throw error;
+  const d0 = new Date(l.criado_em);
+  const copias = [];
+  for (let k = 1; k <= 120; k++) {
+    const dk = somarMeses(d0, k);
+    if (chaveDia(dk) > ateChave) break;
+    copias.push({ valor: l.valor, descricao: l.descricao, categoria: l.categoria || 'Outros', meio: l.meio, tipo: l.tipo, banco: l.banco,
+      criado_em: dk.toISOString(), recorrencia_grupo: id, origem: 'recorrente' });
+  }
+  const { error: e1 } = await sb.from('gastos').update({ recorrencia_grupo: id }).eq('id', id);
+  if (e1) throw e1;
+  if (copias.length) { const { error: e2 } = await sb.from('gastos').insert(copias); if (e2) throw e2; }
+}
+
+// Encerra uma repetição: apaga este mês e todos os seguintes
+$('btn-apagar-prox').addEventListener('click', async (ev) => {
+  const b = ev.currentTarget;
+  if (!b.dataset.confirmar) { b.dataset.confirmar = '1'; b.textContent = 'Toque de novo pra apagar'; return; }
+  const { error } = await sb.from('gastos').delete().eq('recorrencia_grupo', editando.recorrencia_grupo).gte('criado_em', editando.criado_em);
+  if (error) return avisar('Não deu pra apagar: ' + error.message, true);
+  $('dlg-lanc').close();
+  avisar('Este mês e os próximos foram apagados');
+  carregar();
+});
 
 // Junta as parcelas de volta numa compra só
 $('btn-desfazer-parcela').addEventListener('click', async () => {
