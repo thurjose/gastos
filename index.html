@@ -5,8 +5,32 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Gastos</title>
 <meta name="color-scheme" content="light dark">
-<meta name="theme-color" content="#f6f6f3" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#0d0d0d" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#f6f6f3" id="meta-tema">
+<script>
+// Tema: aplicado antes de desenhar a página, pra não piscar.
+// "auto" segue o aparelho; "claro"/"escuro" ficam fixos (salvo neste aparelho).
+(function () {
+  var escolha = '';
+  try { escolha = localStorage.getItem('gastos-tema') || ''; } catch (e) { /* sem armazenamento */ }
+  var aparelho = matchMedia('(prefers-color-scheme: dark)');
+  function aplicar() {
+    var escuro = escolha === 'escuro' || (escolha !== 'claro' && aparelho.matches);
+    document.documentElement.dataset.modo = escuro ? 'escuro' : 'claro';
+    var meta = document.getElementById('meta-tema');
+    if (meta) meta.content = escuro ? '#0d0d0d' : '#f6f6f3';
+  }
+  window.temaGastos = {
+    escolha: function () { return escolha || 'auto'; },
+    definir: function (v) {
+      escolha = v === 'auto' ? '' : v;
+      try { localStorage.setItem('gastos-tema', escolha); } catch (e) { /* sem armazenamento */ }
+      aplicar();
+    },
+  };
+  if (aparelho.addEventListener) aparelho.addEventListener('change', aplicar);
+  aplicar();
+})();
+</script>
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -16,7 +40,8 @@
 <link rel="icon" type="image/png" href="icon-192.png">
 <style>
 /* =====================================================================
-   CORES: claro e escuro seguem o tema do aparelho automaticamente
+   CORES: claro por padrão; escuro quando html[data-modo="escuro"]
+   (o script no <head> decide: aparelho, ou a escolha feita em Ajustes)
    ===================================================================== */
 :root {
   color-scheme: light;
@@ -31,17 +56,17 @@
   --nav-h: 62px;
   font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    color-scheme: dark;
-    --page: #0d0d0d;  --surface: #171716;  --raised: #1f1f1e;
-    --ink: #f0efec;   --ink-2: #c3c2b7;    --muted: #8b8a84;
-    --hair: #2a2a28;  --base: #3a3a37;     --ring: rgba(255,255,255,.08);
-    --accent: #3987e5; --accent-2: #1f5aa0; --accent-track: #1b3c63; --accent-ink: #8cbcf2;
-    --good: #28b228;  --warning: #f0b030;  --critical: #e66767;
-    --sombra: 0 12px 32px rgba(0,0,0,.55);
-  }
+:root[data-modo="escuro"] {
+  color-scheme: dark;
+  --page: #0d0d0d;  --surface: #171716;  --raised: #1f1f1e;
+  --ink: #f0efec;   --ink-2: #c3c2b7;    --muted: #8b8a84;
+  --hair: #2a2a28;  --base: #3a3a37;     --ring: rgba(255,255,255,.08);
+  --accent: #3987e5; --accent-2: #1f5aa0; --accent-track: #1b3c63; --accent-ink: #8cbcf2;
+  --good: #28b228;  --warning: #f0b030;  --critical: #e66767;
+  --sombra: 0 12px 32px rgba(0,0,0,.55);
 }
+/* Curvas de movimento usadas no app todo */
+:root { --sai-rapido: cubic-bezier(.2, .8, .2, 1); --mola: cubic-bezier(.3, 1.25, .5, 1); }
 
 /* ============ BASE ============ */
 * { box-sizing: border-box; }
@@ -79,7 +104,7 @@ label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
 .icone[aria-pressed="true"] { color: var(--accent-ink); background: var(--accent-track); }
 
 /* ============ ESTRUTURA ============ */
-.app { max-width: 1180px; margin: 0 auto; padding: 0 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 92px); }
+.app { max-width: 1180px; margin: 0 auto; padding: 0 16px calc(var(--nav-h) + env(safe-area-inset-bottom) + 92px); overflow-x: clip; }
 .topo {
   position: sticky; top: 0; z-index: 10; background: var(--page);
   display: flex; align-items: center; gap: 8px;
@@ -101,21 +126,32 @@ label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
   background: var(--surface); background: color-mix(in srgb, var(--surface) 94%, transparent); border-top: 1px solid var(--hair);
 }
 .aba-btn {
+  position: relative; z-index: 1;
   border: 0; background: none; display: grid; justify-items: center; align-content: center; gap: 3px;
   font-size: 11px; font-weight: 600; color: var(--muted); padding: 6px 0;
 }
 .aba-btn[aria-current="page"] { color: var(--accent-ink); }
 .aba-btn svg { width: 24px; height: 24px; }
+/* Indicador que desliza até a aba ativa (posição vem do JS: --x e --w) */
+.aba-ind {
+  position: absolute; z-index: 0; left: 0; top: 0; height: var(--nav-h);
+  width: var(--w, 0); transform: translateX(var(--x, 0)); pointer-events: none;
+}
+.aba-ind::before {
+  content: ''; position: absolute; left: 50%; top: 6px; width: 58px; height: 30px; margin-left: -29px;
+  border-radius: 999px; background: var(--accent-track);
+}
 
 @media (min-width: 900px) {
   .marca { display: block; }
   .abas {
-    position: static; display: flex; gap: 4px; height: auto; padding: 4px; border: 1px solid var(--hair);
+    position: relative; display: flex; gap: 4px; height: auto; padding: 4px; border: 1px solid var(--hair);
     border-radius: 999px; background: var(--surface); margin: 0 8px;
   }
   .aba-btn { display: flex; gap: 8px; font-size: 14px; padding: 8px 14px; border-radius: 999px; }
   .aba-btn svg { width: 18px; height: 18px; }
-  .aba-btn[aria-current="page"] { background: var(--accent-track); }
+  .aba-ind { top: 4px; height: calc(100% - 8px); }
+  .aba-ind::before { inset: 0; width: auto; height: auto; margin: 0; }
   .app { padding-bottom: 96px; }
 }
 
@@ -140,8 +176,8 @@ label { display: grid; gap: 6px; font-size: 13px; color: var(--ink-2); }
 .heroi { display: grid; gap: 4px; }
 .rotulo { font-size: 13px; color: var(--ink-2); font-weight: 550; }
 .valor-heroi { font-size: clamp(42px, 12vw, 60px); font-weight: 700; letter-spacing: -0.035em; line-height: 1.02; overflow-wrap: anywhere; }
-.delta { font-size: 13px; color: var(--ink-2); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.seta { font-size: 10px; }
+.delta { font-size: 13px; color: var(--ink-2); }
+.seta { font-size: 10px; margin-right: 6px; vertical-align: 1px; }
 .pior .seta { color: var(--critical); }
 .melhor .seta { color: var(--good); }
 .projecao { margin-top: 10px; padding: 10px 12px; border-radius: 12px; background: var(--page); font-size: 13px; color: var(--ink-2); }
@@ -323,8 +359,110 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
   .cartao { padding: 15px; }
   .topo { margin-left: -12px; margin-right: -12px; padding-left: 12px; }
 }
+/* Segmentado de 3 opções (tema) */
+.segmentado.tres { grid-template-columns: repeat(3, 1fr); }
+
+/* Botão de tema no topo: mostra o sol no escuro (vai pro claro) e a lua no claro */
+:root[data-modo="escuro"] #btn-tema .lua, :root[data-modo="claro"] #btn-tema .sol { display: none; }
+
+/* ============ DESCRIÇÃO: escolher da lista ou digitar ============ */
+.combo { display: grid; gap: 6px; }
+.combo > label { display: block; }
+.combo-campo { position: relative; }
+.combo-campo input { padding-right: 46px; }
+.combo-btn {
+  position: absolute; right: 4px; top: 50%; transform: translateY(-50%);
+  width: 38px; height: 38px; border: 0; border-radius: 9px; background: none; color: var(--ink-2); display: grid; place-items: center;
+}
+.combo-btn svg { transition: transform .2s ease; }
+.combo.aberto .combo-btn svg { transform: rotate(180deg); }
+.combo-lista {
+  max-height: 232px; overflow: auto; overscroll-behavior: contain;
+  border: 1px solid var(--hair); border-radius: 12px; background: var(--page); padding: 4px;
+}
+.combo-lista li {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  padding: 10px 10px; border-radius: 9px; cursor: pointer; font-size: 15px; color: var(--ink);
+}
+.combo-lista li small { font-size: 12px; color: var(--muted); white-space: nowrap; }
+.combo-lista li[aria-selected="true"] { background: var(--accent-track); }
+@media (hover: hover) { .combo-lista li:hover { background: var(--accent-track); } }
+.combo-lista li[aria-selected="true"] small { color: var(--accent-ink); }
+.combo-lista mark { background: none; color: inherit; font-weight: 750; }
+
+/* ============ ANIMAÇÕES (desligadas se o aparelho pede menos movimento) ============ */
 @media (prefers-reduced-motion: no-preference) {
-  .trilho span, .bl-trilho span, .dia .b, .col .b { transition: width .3s ease, height .3s ease, opacity .2s; }
+  /* Indicador das abas desliza com um leve "quique" */
+  .aba-ind.pronto { transition: transform .42s var(--mola), width .42s var(--mola); }
+  .aba-btn { transition: color .2s ease, transform .15s ease; }
+  .aba-btn[aria-current="page"] svg { animation: icone-pop .38s var(--mola); }
+
+  /* Troca de aba e de mês: o conteúdo entra deslizando do lado certo */
+  .aba.entrando { animation: entra-dir .34s var(--sai-rapido) both; }
+  .aba.entrando[data-dir="esq"] { animation-name: entra-esq; }
+  .aba.entrando[data-dir="baixo"] { animation-name: entra-baixo; }
+
+  /* Gráficos crescem quando a tela muda (não a cada toque) */
+  body.animar .dia .b { animation: cresce-y .5s var(--sai-rapido) both; animation-delay: calc(var(--n, 0) * 9ms); transform-origin: bottom; }
+  body.animar .col .b { animation: cresce-y .55s var(--sai-rapido) both; transform-origin: bottom; }
+  body.animar .col:nth-child(2) .b { animation-delay: 40ms; }
+  body.animar .col:nth-child(3) .b { animation-delay: 80ms; }
+  body.animar .col:nth-child(4) .b { animation-delay: 120ms; }
+  body.animar .col:nth-child(5) .b { animation-delay: 160ms; }
+  body.animar .col:nth-child(6) .b { animation-delay: 200ms; }
+  body.animar .col:nth-child(7) .b { animation-delay: 240ms; }
+  body.animar .bl-trilho span, body.animar .trilho span { animation: cresce-x .6s var(--sai-rapido) both; transform-origin: left; }
+  body.animar .bl-trilho span { animation-delay: 60ms; }
+
+  /* Toque: tudo que é clicável afunda um pouco */
+  .botao, .secundario, .chip, .fab, .icone, .texto-link, .perigo, .item, .barra-linha, .dia, .col, .tag button, .segmentado span, .combo-lista li {
+    transition: transform .16s ease, background-color .2s ease, color .2s ease, box-shadow .2s ease, opacity .2s ease;
+  }
+  .botao:active, .secundario:active, .chip:active, .icone:active:not(:disabled), .aba-btn:active, .texto-link:active, .perigo:active { transform: scale(.94); }
+  .fab:active { transform: scale(.93); }
+  .item:active, .barra-linha:active, .combo-lista li:active { transform: scale(.985); }
+  .dia:active:not(:disabled), .col:active { transform: scale(.9); }
+  @media (hover: hover) { .fab:hover { transform: translateY(-2px); box-shadow: 0 16px 36px rgba(0,0,0,.22); } }
+
+  /* Janelas: sobem de baixo no celular, aparecem no centro no computador */
+  dialog[open] { animation: folha-sobe .36s var(--sai-rapido); }
+  dialog[open]::backdrop { animation: some-entra .3s ease; }
+  dialog.saindo { animation: folha-desce .22s ease-in forwards; }
+  dialog.saindo::backdrop { animation: some-sai .22s ease-in forwards; }
+  @media (min-width: 700px) {
+    dialog[open] { animation-name: janela-entra; }
+    dialog.saindo { animation-name: janela-sai; }
+  }
+
+  /* Partes que aparecem e somem */
+  .aviso:not([hidden]) { animation: aviso-entra .32s var(--mola); }
+  .combo-lista:not([hidden]) { animation: lista-abre .2s var(--sai-rapido); }
+  #campo-ate:not([hidden]), #campos-receber:not([hidden]), #linha-quitado:not([hidden]), #linha-proximos:not([hidden]) { animation: lista-abre .24s var(--sai-rapido); }
+  #btn-tema svg { animation: gira .45s var(--mola); }
+  .estado-fatura, .contador { animation: icone-pop .4s var(--mola); }
+}
+@keyframes entra-dir { from { opacity: 0; transform: translateX(22px); } }
+@keyframes entra-esq { from { opacity: 0; transform: translateX(-22px); } }
+@keyframes entra-baixo { from { opacity: 0; transform: translateY(10px); } }
+@keyframes cresce-y { from { transform: scaleY(0); } }
+@keyframes cresce-x { from { transform: scaleX(0); } }
+@keyframes icone-pop { 0% { transform: scale(.7); } 60% { transform: scale(1.12); } 100% { transform: scale(1); } }
+@keyframes gira { from { transform: rotate(-90deg) scale(.6); opacity: 0; } }
+@keyframes folha-sobe { from { transform: translateY(100%); } }
+@keyframes folha-desce { to { transform: translateY(100%); } }
+@keyframes janela-entra { from { opacity: 0; transform: translateY(14px) scale(.96); } }
+@keyframes janela-sai { to { opacity: 0; transform: translateY(8px) scale(.98); } }
+@keyframes some-entra { from { opacity: 0; } }
+@keyframes some-sai { to { opacity: 0; } }
+@keyframes aviso-entra { from { opacity: 0; transform: translate(-50%, 16px) scale(.96); } }
+@keyframes lista-abre { from { opacity: 0; transform: translateY(-6px); } }
+
+/* Troca de tema: o novo tema se espalha em círculo a partir do botão */
+::view-transition-old(root), ::view-transition-new(root) { animation: none; mix-blend-mode: normal; }
+::view-transition-new(root) { animation: revela-tema .55s ease-in-out; }
+@keyframes revela-tema {
+  from { clip-path: circle(0 at var(--vt-x, 50%) var(--vt-y, 0)); }
+  to { clip-path: circle(var(--vt-r, 150vmax) at var(--vt-x, 50%) var(--vt-y, 0)); }
 }
 </style>
 </head>
@@ -357,6 +495,7 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <h1 id="titulo-aba" hidden></h1>
     </div>
     <nav class="abas" aria-label="Seções">
+      <span class="aba-ind" aria-hidden="true"></span>
       <button class="aba-btn" data-aba="resumo" aria-current="page">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Resumo
       </button>
@@ -370,6 +509,10 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg><span>Ajustes<span class="contador" id="contador-pend" hidden></span></span>
       </button>
     </nav>
+    <button class="icone" id="btn-tema" title="Tema claro ou escuro">
+      <svg class="sol" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4L6 18M18 6l1.4-1.4"/></svg>
+      <svg class="lua" width="21" height="21" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.2A8.5 8.5 0 0 1 9.8 3.5 8.5 8.5 0 1 0 20.5 14.2z"/></svg>
+    </button>
     <button class="icone" id="btn-privado" aria-pressed="false" aria-label="Esconder valores" title="Modo privado">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
@@ -525,7 +668,12 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
         <section class="cartao">
           <h2>Aparência e privacidade</h2>
           <div class="form-grade">
-            <p class="ajuda">O tema claro ou escuro acompanha o do seu aparelho automaticamente.</p>
+            <div class="segmentado tres" role="radiogroup" aria-label="Tema">
+              <label><input type="radio" name="tema" value="auto"><span>Automático</span></label>
+              <label><input type="radio" name="tema" value="claro"><span>Claro</span></label>
+              <label><input type="radio" name="tema" value="escuro"><span>Escuro</span></label>
+            </div>
+            <p class="ajuda">Automático segue o tema do aparelho. O botão de sol/lua no topo troca na hora.</p>
             <label class="check"><input type="checkbox" id="chk-privado"> Modo privado (esconde os valores)</label>
             <p class="ajuda">Atalho: o botão de olho no topo da tela.</p>
           </div>
@@ -562,7 +710,18 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <label><input type="radio" name="tipo" value="entrada"><span>Entrada</span></label>
     </div>
     <label>Valor (R$) <input name="valor" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
-    <label>Descrição <input name="descricao" maxlength="120" placeholder="Ex.: Padaria" autocomplete="off"></label>
+    <!-- Descrição: escolhe uma já usada ou digita uma nova -->
+    <div class="combo" id="combo-desc">
+      <label for="in-desc">Descrição</label>
+      <div class="combo-campo">
+        <input id="in-desc" name="descricao" maxlength="120" placeholder="Escolha da lista ou digite" autocomplete="off"
+          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="lista-desc">
+        <button type="button" class="combo-btn" id="btn-lista-desc" tabindex="-1" aria-label="Mostrar descrições já usadas">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+        </button>
+      </div>
+      <ul class="combo-lista" id="lista-desc" role="listbox" aria-label="Descrições já usadas" hidden></ul>
+    </div>
     <label>Categoria <select name="categoria"></select></label>
     <div class="duas">
       <label>Forma
@@ -726,6 +885,14 @@ function h(tag, props = {}, ...filhos) {
   return el;
 }
 const R = (v, extra = '') => h('span', { class: ('m ' + extra).trim() }, brl.format(v));   // dinheiro (borra no modo privado)
+// Troca o conteúdo de um elemento ignorando null/false.
+// (o replaceChildren do navegador escreve "null" na tela se receber null)
+function trocar(el, ...filhos) {
+  el.replaceChildren(...filhos.flat(Infinity).filter((f) => f != null && f !== false));
+  return el;
+}
+// true quando o aparelho pede menos movimento (acessibilidade)
+const semMovimento = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function avisar(texto, erro = false) {
   const a = $('aviso');
@@ -752,6 +919,13 @@ const estado = {
   email: '',
 };
 const ehMesAtual = () => estado.ano === anoHoje && estado.mes === mesHoje;
+const ehMesFuturo = () => estado.ano * 12 + estado.mes > anoHoje * 12 + mesHoje;
+// Último mês com algo lançado (parcelas e mensais criam lançamentos no futuro)
+function ultimoMesComDados() {
+  let max = anoHoje * 12 + mesHoje;
+  for (const l of estado.todas) { const n = Number(l.dia.slice(0, 4)) * 12 + Number(l.dia.slice(5, 7)); if (n > max) max = n; }
+  return max;
+}
 
 // Regras de soma usadas em todo o painel
 const parte = (l) => (l.tipo === 'saida' ? l.valor - (l.a_receber || 0) : l.valor);     // sua parte do gasto
@@ -797,6 +971,7 @@ async function carregar() {
   estado.config = new Map((rConfig.data || []).map((c) => [c.chave, c.valor]));
   estado.pendencias = rPend.data || [];
   document.body.classList.remove('carregando');
+  animarGraficos();
   desenhar();
 }
 
@@ -804,7 +979,9 @@ async function carregar() {
    NAVEGAÇÃO ENTRE ABAS
    ===================================================================== */
 const TITULOS = { resumo: null, extrato: null, fatura: 'Fatura', ajustes: 'Ajustes' };
+const ABAS = ['resumo', 'extrato', 'fatura', 'ajustes'];
 function irPara(aba, { rolar = true } = {}) {
+  const de = ABAS.indexOf(estado.aba), para = ABAS.indexOf(aba);
   estado.aba = aba;
   for (const b of document.querySelectorAll('.aba-btn')) {
     if (b.dataset.aba === aba) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
@@ -812,8 +989,42 @@ function irPara(aba, { rolar = true } = {}) {
   for (const s of document.querySelectorAll('.aba')) s.hidden = s.id !== 'aba-' + aba;
   history.replaceState(null, '', '#' + aba);
   if (rolar) window.scrollTo({ top: 0 });
+  // aba à direita entra pela direita; a primeira abertura só sobe de leve
+  animarEntrada(de === para ? 'baixo' : para > de ? 'dir' : 'esq');
+  animarGraficos();
   desenhar();
+  moverIndicador();
 }
+
+// Reinicia a animação de entrada da aba visível
+function animarEntrada(dir) {
+  const sec = $('aba-' + estado.aba);
+  if (!sec || semMovimento()) return;
+  sec.classList.remove('entrando');
+  sec.dataset.dir = dir;
+  void sec.offsetWidth;                 // força o navegador a "esquecer" a animação anterior
+  sec.classList.add('entrando');
+  sec.addEventListener('animationend', (ev) => { if (ev.target === sec) sec.classList.remove('entrando'); }, { once: true });
+}
+// Liga o crescimento das barras só por um instante (não anima a cada toque num dia)
+function animarGraficos() {
+  if (semMovimento()) return;
+  document.body.classList.remove('animar');
+  void document.body.offsetWidth;
+  document.body.classList.add('animar');
+  clearTimeout(animarGraficos.t);
+  animarGraficos.t = setTimeout(() => document.body.classList.remove('animar'), 1000);
+}
+// Coloca o indicador embaixo da aba ativa
+function moverIndicador() {
+  const b = document.querySelector('.aba-btn[aria-current="page"]');
+  const ind = document.querySelector('.aba-ind');
+  if (!b || !ind || !b.offsetWidth) return;
+  ind.style.setProperty('--x', b.offsetLeft + 'px');
+  ind.style.setProperty('--w', b.offsetWidth + 'px');
+  if (!ind.classList.contains('pronto')) requestAnimationFrame(() => ind.classList.add('pronto'));   // 1ª vez sem deslizar
+}
+addEventListener('resize', moverIndicador);
 
 function desenhar() {
   // Topo: seletor de mês no Resumo/Extrato, título fixo nas outras abas
@@ -822,11 +1033,13 @@ function desenhar() {
   $('titulo-aba').hidden = comMes;
   $('titulo-aba').textContent = TITULOS[estado.aba] || '';
   $('titulo-mes').textContent = capitalizar(nomeMes(estado.ano, estado.mes)) + (estado.ano !== anoHoje ? ` ${estado.ano}` : '');
-  $('mes-prox').disabled = ehMesAtual();
+  $('mes-prox').disabled = estado.ano * 12 + estado.mes >= ultimoMesComDados();
   $('btn-novo').hidden = estado.aba === 'ajustes';
   const nPend = estado.pendencias.length;
+  const mudouContador = $('contador-pend').textContent !== String(nPend);
   $('contador-pend').hidden = !nPend;
   $('contador-pend').textContent = nPend;
+  if (mudouContador) moverIndicador();   // o número muda a largura do botão Ajustes
   atualizarSugestoesCategoria();
 
   if (estado.aba === 'resumo') desenharResumo();
@@ -870,7 +1083,8 @@ function desenharHeroi(total, entradas, totalAnt, gastos, nomeAnt) {
   const c = $('c-heroi');
   const periodo = ehMesAtual() ? `no mesmo período de ${nomeAnt}` : `em ${nomeAnt}`;
   let delta;
-  if (!totalAnt) delta = h('p', { class: 'delta' }, `Sem gastos ${periodo} pra comparar`);
+  if (ehMesFuturo()) delta = h('p', { class: 'delta' }, 'Parcelas e lançamentos mensais já marcados pra este mês');
+  else if (!totalAnt) delta = h('p', { class: 'delta' }, `Sem gastos ${periodo} pra comparar`);
   else {
     const pct = Math.round(((total - totalAnt) / totalAnt) * 100);
     delta = pct === 0
@@ -889,9 +1103,10 @@ function desenharHeroi(total, entradas, totalAnt, gastos, nomeAnt) {
       : h('span', {}, ' · dentro da meta')) : null;
     blocoProj = h('p', { class: 'projecao' }, 'No ritmo atual, o mês fecha em ', h('strong', {}, R(proj)), vsMeta);
   }
-  c.replaceChildren(
-    h('p', { class: 'rotulo' }, `Gasto em ${nomeMes(estado.ano, estado.mes)}`),
-    h('p', { class: 'valor-heroi m' }, brl.format(total)),
+  const valorEl = h('p', { class: 'valor-heroi m' }, brl.format(total));
+  trocar(c,
+    h('p', { class: 'rotulo' }, `${ehMesFuturo() ? 'Já marcado para' : 'Gasto em'} ${nomeMes(estado.ano, estado.mes)}`),
+    valorEl,
     delta,
     blocoProj,
     h('dl', { class: 'secundarios' },
@@ -899,6 +1114,24 @@ function desenharHeroi(total, entradas, totalAnt, gastos, nomeAnt) {
       h('div', {}, h('dt', {}, 'Saldo'), h('dd', {}, R(saldo, saldo < 0 ? 'negativo' : '')))),
     meta ? medidor('Meta do mês', total, meta) : null,
   );
+  contarAte(valorEl, total);
+}
+
+// O número principal "conta" do valor anterior até o novo (ex.: ao trocar de mês)
+let heroiAnterior = null;
+function contarAte(el, alvo) {
+  const de = heroiAnterior;
+  heroiAnterior = alvo;
+  cancelAnimationFrame(contarAte.quadro);
+  if (de == null || de === alvo || semMovimento()) return;
+  const inicio = performance.now(), duracao = 520;
+  const passo = (agora) => {
+    const t = Math.min(1, (agora - inicio) / duracao);
+    const suave = 1 - Math.pow(1 - t, 3);                      // desacelera no fim
+    el.textContent = brl.format(de + (alvo - de) * suave);
+    if (t < 1) contarAte.quadro = requestAnimationFrame(passo);
+  };
+  contarAte.quadro = requestAnimationFrame(passo);
 }
 
 // Situação de uma meta: dentro, perto (80%+) ou estourada
@@ -924,7 +1157,7 @@ function desenharReceber() {
   const c = $('c-receber');
   c.hidden = !pendentes.length;
   if (!pendentes.length) return;
-  c.replaceChildren(
+  trocar(c, 
     h('div', { class: 'cab' }, h('h2', {}, 'A receber'), h('span', { class: 'sub' }, R(soma(pendentes, (l) => l.a_receber)))),
     h('ul', { class: 'lista' }, pendentes.map((l) => h('li', {},
       h('div', {}, h('p', { class: 't' }, `${l.devedor || 'Alguém'} te deve `, R(l.a_receber)),
@@ -958,14 +1191,14 @@ function desenharDias(gastos) {
   const hoje = chaveDia(new Date());
   const fita = $('fita');
   fita.classList.toggle('sel', !!estado.dia);
-  fita.replaceChildren(...Array.from({ length: n }, (_, i) => {
+  trocar(fita, ...Array.from({ length: n }, (_, i) => {
     const d = i + 1;
     const chave = `${estado.ano}-${pad(estado.mes)}-${pad(d)}`;
     const v = porDia.get(chave) || 0;
     const futuro = chave > hoje;
     return h('button', {
       class: 'dia' + (v ? '' : ' zero') + (chave === hoje ? ' hoje' : '') + (futuro ? ' futuro' : ''),
-      vars: { '--h': maximo ? v / maximo : 0 },
+      vars: { '--h': maximo ? v / maximo : 0, '--n': i },
       disabled: futuro && !v,
       'aria-pressed': String(estado.dia === chave),
       'aria-label': `Dia ${d}: ${brl.format(v)}`,
@@ -974,11 +1207,11 @@ function desenharDias(gastos) {
   }));
   const leg = $('fita-legenda');
   if (estado.dia) {
-    leg.replaceChildren(`${capitalizar(fmtDiaLongo.format(dataDaChave(estado.dia)))}: `, R(porDia.get(estado.dia) || 0), ' · ',
+    trocar(leg, `${capitalizar(fmtDiaLongo.format(dataDaChave(estado.dia)))}: `, R(porDia.get(estado.dia) || 0), ' · ',
       h('button', { class: 'texto-link', onclick: () => irPara('extrato') }, 'ver no extrato'));
   } else if (maximo) {
     const [dMax] = [...porDia].find(([, v]) => v === maximo);
-    leg.replaceChildren(`Dia mais caro: ${fmtDiaMes.format(dataDaChave(dMax))}, `, R(maximo));
+    trocar(leg, `Dia mais caro: ${fmtDiaMes.format(dataDaChave(dMax))}, `, R(maximo));
   } else leg.textContent = 'Nenhum gasto neste mês ainda.';
 }
 
@@ -991,7 +1224,7 @@ function desenharCategorias(gastos, gastosAnt, total) {
   const ordem = [...porCat].sort((a, b) => b[1] - a[1]);
   const maximo = ordem[0]?.[1] || 0;
   const mesAntCurto = nomeMesCurto(...mesMais(estado.ano, estado.mes, -1));
-  $('c-categorias').replaceChildren(...(ordem.length ? ordem.map(([cat, v]) => {
+  trocar($('c-categorias'), ...(ordem.length ? ordem.map(([cat, v]) => {
     const ant = porCatAnt.get(cat) || 0;
     const pct = ant ? Math.round(((v - ant) / ant) * 100) : 0;
     const meta = estado.metas.get(cat);
@@ -1034,7 +1267,7 @@ function desenharEvolucao() {
         d.proj ? h('span', { class: 'b proj', vars: { '--h': d.proj / maximo } }) : null),
       h('span', { class: 'x' }, capitalizar(nomeMesCurto(d.a, d.m))))),
     meta ? h('div', { class: 'linha-meta', vars: { '--h': meta / maximo } }, h('span', { class: 'm' }, 'meta R$ ' + brlCurto.format(meta))) : null);
-  $('c-evolucao').replaceChildren(caixa,
+  trocar($('c-evolucao'), caixa,
     h('div', { class: 'legenda-graf' },
       h('span', {}, h('i'), 'gasto'),
       dados.some((d) => d.proj) ? h('span', {}, h('i', { class: 'proj' }), 'projeção até o fim do mês') : null,
@@ -1056,8 +1289,8 @@ function desenharSemana() {
   const ordem = [1, 2, 3, 4, 5, 6, 0];   // segunda a domingo
   const maximo = Math.max(1, ...medias);
   const iMax = medias.indexOf(Math.max(...medias));
-  if (!lista.length) return $('c-semana').replaceChildren(h('p', { class: 'vazio' }, 'Ainda não há gastos suficientes.'));
-  $('c-semana').replaceChildren(
+  if (!lista.length) return trocar($('c-semana'), h('p', { class: 'vazio' }, 'Ainda não há gastos suficientes.'));
+  trocar($('c-semana'), 
     h('div', { class: 'colunas', style: 'height:140px', role: 'img', 'aria-label': 'Gasto médio por dia da semana' },
       ordem.map((i) => h('div', { class: 'col' + (i === iMax ? ' atual' : '') },
         h('span', { class: 'rot-v m' }, i === iMax ? brlCurto.format(medias[i]) : ''),
@@ -1089,7 +1322,7 @@ function desenharTop(gastos) {
   const top = [...grupos.values()].map((g) => ({ nome: nomeExibicao(g), total: soma(g), n: g.length }))
     .sort((a, b) => b.total - a.total).slice(0, 5);
   const maximo = top[0]?.total || 0;
-  $('c-top').replaceChildren(...(top.length ? top.map((t) => h('li', {}, h('button', {
+  trocar($('c-top'), ...(top.length ? top.map((t) => h('li', {}, h('button', {
     class: 'barra-linha', onclick: () => { estado.busca = t.nome; $('busca').value = t.nome; irPara('extrato'); },
   },
     h('span', { class: 'bl-topo' }, h('span', {}, t.nome), R(t.total, 'v')),
@@ -1124,8 +1357,8 @@ function detectarRecorrentes() {
 }
 function desenharRecorrentes() {
   const rec = detectarRecorrentes();
-  $('rec-total').replaceChildren(...(rec.length ? [R(rec.reduce((t, r) => t + r.media, 0)), ' por mês'] : []));
-  $('c-recorrentes').replaceChildren(...(rec.length ? rec.map((r) => h('li', {},
+  trocar($('rec-total'), ...(rec.length ? [R(rec.reduce((t, r) => t + r.media, 0)), ' por mês'] : []));
+  trocar($('c-recorrentes'), ...(rec.length ? rec.map((r) => h('li', {},
     h('div', {}, h('p', { class: 't' }, r.nome), h('p', { class: 's' }, `${r.categoria} · por volta do dia ${r.dia} · ${r.meses} meses`)),
     R(r.media, 'v'))) : [h('li', { class: 'vazio' }, 'Nada recorrente ainda. Aparece aqui o que se repete em 3 meses ou mais, com valor parecido.')]));
 }
@@ -1151,14 +1384,14 @@ function desenharExtrato() {
   if (estado.dia) tag(fmtDiaMes.format(dataDaChave(estado.dia)), () => (estado.dia = null));
   if (estado.categoria) tag(estado.categoria, () => (estado.categoria = null));
   if (estado.busca) tag(`"${estado.busca}"`, () => { estado.busca = ''; $('busca').value = ''; });
-  $('tags').replaceChildren(...tags);
+  trocar($('tags'), ...tags);
 
   const gastoLista = soma(lista.filter(ehGasto));
-  $('extrato-total').replaceChildren(...(lista.length ? [`${lista.length} lançamento(s) · gasto `, R(gastoLista)] : []));
+  trocar($('extrato-total'), ...(lista.length ? [`${lista.length} lançamento(s) · gasto `, R(gastoLista)] : []));
 
   const ol = $('lista-extrato');
   if (!lista.length) {
-    ol.replaceChildren(h('li', { class: 'vazio' }, tags.length
+    trocar(ol, h('li', { class: 'vazio' }, tags.length
       ? ['Nada encontrado com esses filtros. ', h('button', { class: 'texto-link', onclick: limparFiltros }, 'Limpar filtros')]
       : 'Nenhum lançamento neste mês. Eles aparecem aqui sozinhos quando você paga com Apple Pay ou faz um Pix.'));
     return;
@@ -1173,7 +1406,7 @@ function desenharExtrato() {
     }
     itens.push(h('li', {}, elementoItem(l)));
   }
-  ol.replaceChildren(...itens);
+  trocar(ol, ...itens);
 }
 function limparFiltros() {
   Object.assign(estado, { dia: null, categoria: null, busca: '' });
@@ -1208,6 +1441,35 @@ function faturaDe(chave, F, V) {
   const [av, mv] = V > F ? [a, m] : mesMais(a, m, 1);
   return { fech, venc: ymd(av, mv, V) };
 }
+// Formulário das datas do cartão (aparece na própria aba Fatura)
+function formDatasCartao({ aoCancelar = null } = {}) {
+  const campo = (rotulo, nome, ex) => h('label', {}, rotulo,
+    h('input', { name: nome, inputMode: 'numeric', placeholder: ex, autocomplete: 'off', maxLength: 2, value: estado.config.get(nome) || '' }));
+  return h('form', { class: 'form-grade', onsubmit: async (ev) => {
+    ev.preventDefault();
+    const f = ev.currentTarget.elements;
+    const linhas = [];
+    for (const k of ['fatura_fechamento', 'fatura_vencimento']) {
+      const n = Number(f[k].value.trim());
+      if (!Number.isInteger(n) || n < 1 || n > 31) return avisar('Use dias de 1 a 31 nos dois campos.', true);
+      linhas.push({ chave: k, valor: String(n) });
+    }
+    if (linhas[0].valor === linhas[1].valor) return avisar('O fechamento e o vencimento não podem cair no mesmo dia.', true);
+    const { error } = await sb.from('config').upsert(linhas);
+    if (error) return avisar('Não deu pra salvar: ' + error.message, true);
+    for (const { chave, valor } of linhas) estado.config.set(chave, valor);
+    estado.faturaPasso = 0;
+    avisar('Datas do cartão salvas');
+    animarEntrada('baixo');
+    desenhar();
+  } },
+    h('div', { class: 'duas' }, campo('Dia do fechamento', 'fatura_fechamento', 'Ex.: 3'), campo('Dia do vencimento', 'fatura_vencimento', 'Ex.: 10')),
+    h('p', { class: 'ajuda' }, 'As duas datas aparecem na fatura, no app do Bradesco. Se só achar o "melhor dia de compra", use ele como fechamento. Compras no dia do fechamento ou depois entram na fatura seguinte.'),
+    h('div', { class: 'botoes' },
+      aoCancelar ? h('button', { type: 'button', class: 'secundario', onclick: aoCancelar }, 'Cancelar') : null,
+      h('span', { class: 'espaco' }),
+      h('button', { type: 'submit', class: 'botao' }, 'Salvar datas')));
+}
 function desenharFatura() {
   const F = configNum('fatura_fechamento');
   const V = configNum('fatura_vencimento');
@@ -1215,10 +1477,11 @@ function desenharFatura() {
   $('fatura-config').hidden = !semConfig;
   $('fatura-conteudo').hidden = semConfig;
   if (semConfig) {
-    $('fatura-config').replaceChildren(
-      h('h2', { style: 'margin-bottom:8px' }, 'Configure o cartão'),
-      h('p', { class: 'ajuda', style: 'margin-bottom:14px' }, 'Pra montar a fatura, preciso do dia de fechamento e de vencimento do seu cartão.'),
-      h('button', { class: 'botao', onclick: () => irPara('ajustes') }, 'Ir para Ajustes'));
+    trocar($('fatura-config'),
+      h('h2', { style: 'margin-bottom:6px' }, 'Configure o cartão de crédito'),
+      h('p', { class: 'ajuda', style: 'margin-bottom:14px' },
+        'Com as duas datas, esta aba separa as compras no crédito por fatura, mostra quanto vem nas próximas e acompanha os parcelamentos.'),
+      formDatasCartao());
     return;
   }
   const hoje = chaveDia(new Date());
@@ -1234,7 +1497,7 @@ function desenharFatura() {
   const situ = hoje < sel.fech ? ['aberta', 'Aberta'] : hoje < sel.venc ? ['fechada', 'Fechada'] : ['vencida', hoje === sel.venc ? 'Vence hoje' : 'Vencida'];
   const [va, vm] = sel.venc.split('-').map(Number);
 
-  $('c-fatura').replaceChildren(
+  trocar($('c-fatura'), 
     h('div', { class: 'fatura-nav' },
       h('button', { class: 'icone', 'aria-label': 'Fatura anterior', disabled: estado.faturaPasso <= -3, onclick: () => { estado.faturaPasso--; desenhar(); } }, '‹'),
       h('div', { style: 'text-align:center' }, h('h2', {}, `Fatura de ${nomeMes(va, vm)}`), h('span', { class: 'estado-fatura ' + situ[0] }, situ[1])),
@@ -1243,12 +1506,17 @@ function desenharFatura() {
     h('div', { class: 'datas-fatura', style: 'justify-content:center' },
       h('span', {}, 'Fecha', h('strong', {}, fmtDiaCurto.format(dataDaChave(sel.fech)))),
       h('span', {}, 'Vence', h('strong', {}, fmtDiaCurto.format(dataDaChave(sel.venc)))),
-      h('span', {}, 'Compras', h('strong', {}, compras.length))));
+      h('span', {}, 'Compras', h('strong', {}, compras.length))),
+    h('div', { style: 'text-align:center;margin-top:10px' },
+      h('button', { class: 'texto-link', onclick: () => {
+        trocar($('c-fatura'), h('h2', { style: 'margin-bottom:12px' }, 'Datas do cartão'), formDatasCartao({ aoCancelar: desenhar }));
+        $('c-fatura').querySelector('input').focus();
+      } }, `Fecha dia ${F}, vence dia ${V} · mudar`)));
 
   // Próximas faturas: o que já está comprometido (parcelas)
   const proximas = Array.from({ length: 4 }, (_, i) => faturaDe(ymd(...mesMais(fa, fm, i - 1), F), F, V))   // começa na aberta
     .map((f) => ({ f, total: soma(credito.filter((l) => l.fat.fech === f.fech), (l) => l.valor) }));
-  $('c-proximas').replaceChildren(...proximas.map(({ f, total: t }) => {
+  trocar($('c-proximas'), ...proximas.map(({ f, total: t }) => {
     const [a2, m2] = f.venc.split('-').map(Number);
     return h('li', {}, h('div', {}, h('p', { class: 't' }, capitalizar(nomeMes(a2, m2))), h('p', { class: 's' }, `vence ${fmtDiaCurto.format(dataDaChave(f.venc))}`)), R(t, 'v'));
   }));
@@ -1260,11 +1528,11 @@ function desenharFatura() {
     const futuras = g.filter((l) => l.fat.fech > aberta.fech || (l.fat.fech === aberta.fech));
     return { g, futuras, total: g[0].parcela_total, desc: g[0].descricao, restante: soma(futuras, (l) => l.valor) };
   }).filter((x) => x.futuras.length);
-  $('c-parcelas').replaceChildren(...(ativos.length ? ativos.map((x) => h('li', {},
+  trocar($('c-parcelas'), ...(ativos.length ? ativos.map((x) => h('li', {},
     h('div', {}, h('p', { class: 't' }, x.desc), h('p', { class: 's' }, `faltam ${x.futuras.length} de ${x.total} parcelas`)),
     R(x.restante, 'v'))) : [h('li', { class: 'vazio' }, 'Nenhum parcelamento. Pra parcelar, abra uma compra no crédito e escolha o número de parcelas.')]));
 
-  $('c-compras').replaceChildren(...(compras.length ? compras.map((l) => h('li', {}, elementoItem(l)))
+  trocar($('c-compras'), ...(compras.length ? compras.map((l) => h('li', {}, elementoItem(l)))
     : [h('li', { class: 'vazio' }, 'Nenhuma compra no crédito nesta fatura.')]));
 }
 
@@ -1297,7 +1565,7 @@ function opcoesCategoria(select, { atual = '', comAutomatica = false, comEspecia
   if (comEspeciais) grupos.push(h('optgroup', { label: 'Especiais' }, ESPECIAIS.map((c) => h('option', { value: c }, c))));
   // lançamento antigo com categoria que não existe mais: mostra pra não perder
   if (atual && !cats.includes(atual) && !ESPECIAIS.includes(atual)) grupos.push(h('optgroup', { label: 'Removida' }, h('option', { value: atual }, atual)));
-  select.replaceChildren(...grupos);
+  trocar(select, ...grupos);
   select.value = atual || (comAutomatica ? '' : cats[0]);
 }
 function atualizarSugestoesCategoria() {
@@ -1308,7 +1576,7 @@ function atualizarSugestoesCategoria() {
 function desenharCategoriasAjuste() {
   const uso = new Map();
   for (const l of estado.todas) uso.set(categoriaDe(l), (uso.get(categoriaDe(l)) || 0) + 1);
-  $('lista-cats').replaceChildren(...categoriasDoUsuario().map((cat) => {
+  trocar($('lista-cats'), ...categoriasDoUsuario().map((cat) => {
     const li = h('li', {});
     const n = uso.get(cat) || 0;
     const info = h('div', {}, h('p', { class: 't' }, cat), h('p', { class: 's' }, n ? `${n} lançamento(s) recentes` : 'sem lançamentos recentes'));
@@ -1340,7 +1608,7 @@ function editarCategoria(li, antiga) {
     } catch (e) { avisar('Não deu pra renomear: ' + e.message, true); }
   };
   input.addEventListener('keydown', (ev) => { if (ev.key === 'Enter') { ev.preventDefault(); salvar(); } if (ev.key === 'Escape') desenharCategoriasAjuste(); });
-  li.replaceChildren(h('div', { class: 'cat-edita' }, input,
+  trocar(li, h('div', { class: 'cat-edita' }, input,
     h('button', { class: 'botao', style: 'padding:10px 14px', onclick: salvar }, 'Salvar'),
     h('button', { class: 'texto-link', onclick: desenharCategoriasAjuste }, 'Cancelar')));
   input.focus();
@@ -1385,7 +1653,7 @@ function desenharAjustes() {
   fc.resumo_dia_semana.value = estado.config.get('resumo_dia_semana') || '0';
   // Metas
   $('form-metas').elements.total.value = valorCampo(estado.metas.get('total'));
-  $('metas-categorias').replaceChildren(...todasCategorias().map((cat) => h('label', { class: 'linha-campo' },
+  trocar($('metas-categorias'), ...todasCategorias().map((cat) => h('label', { class: 'linha-campo' },
     h('span', {}, cat), h('input', { name: 'cat:' + cat, inputMode: 'decimal', placeholder: 'Sem meta', autocomplete: 'off', value: valorCampo(estado.metas.get(cat)) }))));
   // Categorias e regras
   desenharCategoriasAjuste();
@@ -1396,7 +1664,7 @@ function desenharAjustes() {
   // Pendências
   const pend = $('c-pendencias');
   pend.hidden = !estado.pendencias.length;
-  pend.replaceChildren(
+  trocar(pend, 
     h('h2', {}, `Precisam de revisão (${estado.pendencias.length})`),
     h('p', { class: 'ajuda', style: 'margin:6px 0 4px' }, 'Notificações ou itens que a automação não conseguiu entender. Lance manualmente ou descarte.'),
     ...estado.pendencias.map((p) => h('div', { class: 'pend' },
@@ -1408,7 +1676,7 @@ function desenharAjustes() {
         h('button', { class: 'perigo', onclick: () => descartarPendencia(p.id) }, 'Descartar')))));
 }
 function desenharRegras() {
-  $('lista-regras').replaceChildren(...(estado.regras.length ? estado.regras.map((r) => h('li', {},
+  trocar($('lista-regras'), ...(estado.regras.length ? estado.regras.map((r) => h('li', {},
     h('span', {}, h('code', {}, r.padrao), ` → ${r.categoria}`),
     h('button', { class: 'perigo', onclick: async () => {
       const { error } = await sb.from('regras_categoria').delete().eq('id', r.id);
@@ -1502,7 +1770,7 @@ const formLanc = $('form-lanc');
 let editando = null;          // linha em edição (ou null)
 let pendenciaOrigem = null;   // se veio de "Lançar" numa pendência
 
-formLanc.elements.parcelas.replaceChildren(...Array.from({ length: 24 }, (_, i) => h('option', { value: i + 1 }, i ? `${i + 1}x` : 'À vista')));
+trocar(formLanc.elements.parcelas, ...Array.from({ length: 24 }, (_, i) => h('option', { value: i + 1 }, i ? `${i + 1}x` : 'À vista')));
 
 function atualizarCamposDialogo() {
   const f = formLanc.elements;
@@ -1569,10 +1837,107 @@ function abrirLancamento(l = null, sugestao = null) {
   prox.textContent = 'Apagar este e os próximos';
   delete prox.dataset.confirmar;
   if (l?.recorrencia_grupo) apagar.textContent = 'Apagar só este';
+  fecharListaDesc();
   atualizarCamposDialogo();
   $('dlg-lanc').showModal();
   if (!l) f.valor.focus();
 }
+
+/* ---------- Descrição: escolher uma já usada (ou digitar uma nova) ---------- */
+const inDesc = $('in-desc'), listaDesc = $('lista-desc'), comboDesc = $('combo-desc');
+let opcoesDesc = [], ativaDesc = -1, escFechouLista = 0;
+
+// Descrições já usadas no mesmo tipo (saída/entrada), das mais usadas pras menos.
+// No fim entram os textos das regras que ainda não apareceram em nenhum lançamento.
+function descricoesConhecidas(tipo) {
+  const mapa = new Map();
+  for (const l of estado.todas) {                       // vem do mais novo pro mais antigo
+    const texto = (l.descricao || '').trim();
+    if (l.tipo !== tipo || !texto) continue;
+    const k = normalizar(texto);
+    const x = mapa.get(k);
+    if (x) x.n++; else mapa.set(k, { texto, categoria: l.categoria, n: 1 });   // guarda a categoria mais recente
+  }
+  const lista = [...mapa.values()].sort((a, b) => b.n - a.n);   // empate: o mais recente primeiro
+  if (tipo === 'saida') for (const r of estado.regras) {
+    const texto = capitalizar(r.padrao.toLowerCase());
+    if (!mapa.has(normalizar(texto))) lista.push({ texto, categoria: r.categoria, n: 0 });
+  }
+  return lista;
+}
+// Deixa em negrito o trecho que bate com o que foi digitado
+function destacar(texto, termo) {
+  const i = termo ? normalizar(texto).indexOf(termo) : -1;
+  if (i < 0 || normalizar(texto).length !== texto.length) return texto;
+  return [texto.slice(0, i), h('mark', {}, texto.slice(i, i + termo.length)), texto.slice(i + termo.length)];
+}
+function abrirListaDesc() {
+  const termo = normalizar(inDesc.value.trim());
+  const todas = descricoesConhecidas(formLanc.elements.tipo.value);
+  opcoesDesc = (termo ? todas.filter((o) => normalizar(o.texto).includes(termo)) : todas).slice(0, 40);
+  if (!opcoesDesc.length) return fecharListaDesc();
+  trocar(listaDesc, opcoesDesc.map((o, i) => h('li', {
+    id: 'op-desc-' + i, role: 'option', 'aria-selected': 'false',
+    onpointerdown: (ev) => ev.preventDefault(),            // não tira o foco do campo
+    onclick: () => escolherDesc(i),
+  }, h('span', {}, destacar(o.texto, termo)),
+     h('small', {}, [o.categoria || 'Outros', o.n ? `${o.n}x` : 'regra'].join(' · ')))));
+  ativaDesc = -1;
+  listaDesc.hidden = false;
+  comboDesc.classList.add('aberto');
+  inDesc.setAttribute('aria-expanded', 'true');
+}
+function fecharListaDesc() {
+  const estava = !listaDesc.hidden;
+  listaDesc.hidden = true;
+  comboDesc.classList.remove('aberto');
+  inDesc.setAttribute('aria-expanded', 'false');
+  inDesc.removeAttribute('aria-activedescendant');
+  ativaDesc = -1;
+  return estava;
+}
+function marcarDesc(i) {
+  const itens = [...listaDesc.children];
+  if (!itens.length) return;
+  ativaDesc = (i + itens.length) % itens.length;
+  itens.forEach((li, k) => li.setAttribute('aria-selected', String(k === ativaDesc)));
+  inDesc.setAttribute('aria-activedescendant', itens[ativaDesc].id);
+  itens[ativaDesc].scrollIntoView({ block: 'nearest' });
+}
+function escolherDesc(i) {
+  const o = opcoesDesc[i];
+  if (!o) return;
+  inDesc.value = o.texto;
+  // Se a categoria ainda está em "Automática", usa a mesma da última vez
+  const cat = formLanc.elements.categoria;
+  if (!cat.value && o.categoria && [...cat.options].some((op) => op.value === o.categoria)) cat.value = o.categoria;
+  fecharListaDesc();
+}
+inDesc.addEventListener('focus', abrirListaDesc);
+inDesc.addEventListener('input', abrirListaDesc);
+// Saiu do campo pelo teclado (Tab): fecha. Com toque/clique, quem fecha é o "click" lá embaixo,
+// pra lista não sumir no meio do toque e o conteúdo da janela não pular de lugar.
+let ponteiroAbaixo = false;
+inDesc.addEventListener('blur', () => setTimeout(() => {
+  if (!ponteiroAbaixo && !comboDesc.contains(document.activeElement)) fecharListaDesc();
+}, 0));
+inDesc.addEventListener('keydown', (ev) => {
+  const aberta = !listaDesc.hidden;
+  if (ev.key === 'ArrowDown') { ev.preventDefault(); if (!aberta) abrirListaDesc(); marcarDesc(ativaDesc + 1); }
+  else if (ev.key === 'ArrowUp' && aberta) { ev.preventDefault(); marcarDesc(ativaDesc - 1); }
+  else if (ev.key === 'Enter' && aberta && ativaDesc >= 0) { ev.preventDefault(); escolherDesc(ativaDesc); }
+  else if (ev.key === 'Escape' && aberta) { ev.preventDefault(); fecharListaDesc(); escFechouLista = Date.now(); }
+});
+// A setinha abre a lista sem abrir o teclado do celular
+$('btn-lista-desc').addEventListener('pointerdown', (ev) => ev.preventDefault());
+$('btn-lista-desc').addEventListener('click', () => { if (!fecharListaDesc()) abrirListaDesc(); });
+// Tocar fora da descrição fecha a lista (depois que o toque termina)
+$('dlg-lanc').addEventListener('pointerdown', () => { ponteiroAbaixo = true; }, true);
+addEventListener('pointerup', () => setTimeout(() => { ponteiroAbaixo = false; }, 0), true);
+addEventListener('pointercancel', () => { ponteiroAbaixo = false; }, true);
+$('dlg-lanc').addEventListener('click', (ev) => { if (!comboDesc.contains(ev.target)) fecharListaDesc(); });
+// Trocou entre Saída e Entrada com a lista aberta: mostra as descrições do outro tipo
+formLanc.querySelectorAll('[name="tipo"]').forEach((r) => r.addEventListener('change', () => { if (!listaDesc.hidden) abrirListaDesc(); }));
 
 formLanc.addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -1628,7 +1993,7 @@ formLanc.addEventListener('submit', async (ev) => {
       else if (f.repetir.checked) await repetirMensal(data.id, f.repetir_ate.value);
       if (pendenciaOrigem) await sb.from('pix_nao_reconhecido').delete().eq('id', pendenciaOrigem);
     }
-    $('dlg-lanc').close();
+    fecharJanela($('dlg-lanc'));
     avisar(editando ? 'Lançamento atualizado' : 'Lançamento salvo');
     carregar();
   } catch (e) {
@@ -1679,7 +2044,7 @@ $('btn-apagar-prox').addEventListener('click', async (ev) => {
   if (!b.dataset.confirmar) { b.dataset.confirmar = '1'; b.textContent = 'Toque de novo pra apagar'; return; }
   const { error } = await sb.from('gastos').delete().eq('recorrencia_grupo', editando.recorrencia_grupo).gte('criado_em', editando.criado_em);
   if (error) return avisar('Não deu pra apagar: ' + error.message, true);
-  $('dlg-lanc').close();
+  fecharJanela($('dlg-lanc'));
   avisar('Este mês e os próximos foram apagados');
   carregar();
 });
@@ -1694,7 +2059,7 @@ $('btn-desfazer-parcela').addEventListener('click', async () => {
   if (e1) return avisar('Erro: ' + e1.message, true);
   const { error: e2 } = await sb.from('gastos').update({ valor: total, parcela_grupo: null, parcela_num: null, parcela_total: null }).eq('id', grupo);
   if (e2) return avisar('Erro: ' + e2.message, true);
-  $('dlg-lanc').close();
+  fecharJanela($('dlg-lanc'));
   avisar('Parcelamento desfeito');
   carregar();
 });
@@ -1708,7 +2073,7 @@ $('btn-apagar').addEventListener('click', async (ev) => {
     : sb.from('gastos').delete().eq('id', editando.id);
   const { error } = await q;
   if (error) return avisar('Não deu pra apagar: ' + error.message, true);
-  $('dlg-lanc').close();
+  fecharJanela($('dlg-lanc'));
   avisar('Apagado');
   carregar();
 });
@@ -1817,7 +2182,7 @@ async function analisarImportacao() {
   $('imp-resumo').textContent = `${itens.length} lançamento(s) no arquivo · ${jaTinha} já estavam registrados · ${novos.length} faltando`
     + (ignorados ? ` · ${ignorados} ignorado(s)` : '') + (novos.length ? '. Desmarque o que não quiser importar.' : '. Está tudo em dia.');
   $('imp-lista').hidden = !novos.length;
-  $('imp-lista').replaceChildren(...novos.map((it, i) => h('li', {},
+  trocar($('imp-lista'), ...novos.map((it, i) => h('li', {},
     h('input', { type: 'checkbox', checked: true, 'data-i': i, 'aria-label': `Importar ${it.descricao}` }),
     h('div', { class: 'pd' }, it.descricao, h('small', {}, `${fmtDiaCurto.format(dataDaChave(it.data))} · ${NOME_MEIO[it.meio]}`)),
     h('span', { class: 'm', style: it.tipo === 'entrada' ? 'color:var(--good)' : '' }, (it.tipo === 'entrada' ? '+' : '−') + brl.format(it.valor)))));
@@ -1834,7 +2199,7 @@ $('imp-confirmar').addEventListener('click', async () => {
   // ignoreDuplicates: se o mesmo extrato for importado de novo, nada duplica
   const { error } = await sb.from('gastos').upsert(linhas, { onConflict: 'ref_externa', ignoreDuplicates: true });
   if (error) return avisar('Não deu pra importar: ' + error.message, true);
-  $('dlg-importar').close();
+  fecharJanela($('dlg-importar'));
   avisar(`${linhas.length} lançamento(s) importado(s)`);
   carregar();
 });
@@ -1867,12 +2232,23 @@ $('btn-csv').addEventListener('click', () => {
 /* =====================================================================
    CONTROLES GERAIS
    ===================================================================== */
-document.querySelectorAll('.aba-btn').forEach((b) => b.addEventListener('click', () => irPara(b.dataset.aba)));
+// Tocar na aba já aberta só volta ao topo
+document.querySelectorAll('.aba-btn').forEach((b) => b.addEventListener('click', () => {
+  if (b.dataset.aba === estado.aba) return window.scrollTo({ top: 0, behavior: semMovimento() ? 'auto' : 'smooth' });
+  irPara(b.dataset.aba);
+}));
+// Endereço com #aba digitado ou link: abre a aba certa
+addEventListener('hashchange', () => {
+  const aba = location.hash.slice(1);
+  if (ABAS.includes(aba) && aba !== estado.aba && !$('app').hidden) irPara(aba);
+});
 $('mes-ant').addEventListener('click', () => mudarMes(-1));
 $('mes-prox').addEventListener('click', () => mudarMes(1));
 function mudarMes(passo) {
   [estado.ano, estado.mes] = mesMais(estado.ano, estado.mes, passo);
   estado.dia = null; estado.categoria = null;
+  animarEntrada(passo > 0 ? 'dir' : 'esq');
+  animarGraficos();
   // se o mês novo pede dados mais antigos que os carregados, busca de novo
   if (limitesDoMes(...mesMais(estado.ano, estado.mes, -6))[0] < estado.inicioCarregado) carregar(); else desenhar();
 }
@@ -1900,9 +2276,56 @@ $('btn-privado').addEventListener('click', () => definirPrivado(!document.body.c
 $('chk-privado').addEventListener('change', (ev) => definirPrivado(ev.target.checked));
 try { definirPrivado(localStorage.getItem('gastos-privado') === '1'); } catch { /* sem armazenamento */ }
 
-// Janelas: fechar pelo botão ou tocando fora
-document.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', () => b.closest('dialog').close()));
-document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (ev) => { if (ev.target === d) d.close(); }));
+// Tema: Automático / Claro / Escuro (a lógica que aplica está no <head>)
+function atualizarControlesTema() {
+  const escolha = window.temaGastos.escolha();
+  const escuro = document.documentElement.dataset.modo === 'escuro';
+  for (const r of document.querySelectorAll('input[name="tema"]')) r.checked = r.value === escolha;
+  $('btn-tema').setAttribute('aria-label', escuro ? 'Usar tema claro' : 'Usar tema escuro');
+}
+function trocarTema(escolha, origem) {
+  const aplicar = () => { window.temaGastos.definir(escolha); atualizarControlesTema(); };
+  // Onde o navegador suporta, o tema novo se espalha em círculo a partir do botão tocado
+  if (!document.startViewTransition || semMovimento()) return aplicar();
+  const r = origem?.getBoundingClientRect();
+  const x = r ? r.left + r.width / 2 : innerWidth / 2, y = r ? r.top + r.height / 2 : 0;
+  const raiz = document.documentElement.style;
+  raiz.setProperty('--vt-x', x + 'px');
+  raiz.setProperty('--vt-y', y + 'px');
+  raiz.setProperty('--vt-r', Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 'px');
+  document.startViewTransition(aplicar);
+}
+$('btn-tema').addEventListener('click', (ev) =>
+  trocarTema(document.documentElement.dataset.modo === 'escuro' ? 'claro' : 'escuro', ev.currentTarget));
+for (const r of document.querySelectorAll('input[name="tema"]')) r.addEventListener('change', () => trocarTema(r.value, r.nextElementSibling));
+matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change', atualizarControlesTema);
+atualizarControlesTema();
+
+// Janelas: fecham com animação (pelo botão, tocando fora ou com Esc)
+function fecharJanela(d) {
+  if (!d.open || d.classList.contains('saindo')) return;
+  if (semMovimento()) return d.close();
+  d.classList.add('saindo');
+  const fim = () => { if (!d.classList.contains('saindo')) return; d.classList.remove('saindo'); d.close(); };
+  d.addEventListener('animationend', function aoFim(ev) {
+    if (ev.target !== d) return;                 // ignora animações de dentro da janela
+    d.removeEventListener('animationend', aoFim);
+    fim();
+  });
+  setTimeout(fim, 400);                          // garantia, caso a animação não dispare
+}
+document.querySelectorAll('[data-fechar]').forEach((b) => b.addEventListener('click', () => fecharJanela(b.closest('dialog'))));
+document.querySelectorAll('dialog').forEach((d) => {
+  // Fecha tocando no fundo escuro, só se o toque começou e terminou no fundo
+  d.addEventListener('pointerdown', (ev) => { d.dataset.toqueNoFundo = ev.target === d ? '1' : ''; });
+  d.addEventListener('click', (ev) => { if (ev.target === d && d.dataset.toqueNoFundo) fecharJanela(d); });
+  d.addEventListener('cancel', (ev) => {
+    ev.preventDefault();
+    // Esc com a lista de descrições aberta fecha só a lista
+    if (d.id === 'dlg-lanc' && (fecharListaDesc() || Date.now() - escFechouLista < 200)) return;
+    fecharJanela(d);
+  });
+});
 
 // Linha embaixo do topo quando a página rola
 addEventListener('scroll', () => $('topo').classList.toggle('rolou', scrollY > 4), { passive: true });
@@ -1941,7 +2364,7 @@ function entrar(email) {
   estado.email = email || '';
   mostrarTela('app');
   const aba = location.hash.slice(1);
-  irPara(['resumo', 'extrato', 'fatura', 'ajustes'].includes(aba) ? aba : 'resumo', { rolar: false });
+  irPara(ABAS.includes(aba) ? aba : 'resumo', { rolar: false });
   ultimaCarga = Date.now();
   carregar();
 }
