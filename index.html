@@ -390,6 +390,66 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
 .combo-lista li[aria-selected="true"] small { color: var(--accent-ink); }
 .combo-lista mark { background: none; color: inherit; font-weight: 750; }
 
+/* ============ TAGS ============ */
+.tags-caixa {
+  display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 46px;
+  padding: 5px 6px; border: 1px solid var(--hair); border-radius: 11px; background: var(--page);
+}
+.tags-caixa:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.tags-caixa input { border: 0; background: none; padding: 6px; flex: 1 1 110px; width: auto; }
+.tags-caixa input:focus-visible { outline: none; }
+.tag-chip {
+  display: inline-flex; align-items: center; font-size: 14px; font-weight: 600; padding: 3px 2px 3px 10px;
+  border-radius: 999px; background: var(--accent-track); color: var(--accent-ink);
+}
+.tag-chip button { border: 0; background: none; color: inherit; font-size: 18px; line-height: 1; padding: 0 7px; }
+.tags-sugestoes { display: flex; flex-wrap: wrap; gap: 6px; }
+.tags-sugestoes button { border: 1px dashed var(--base); background: none; color: var(--ink-2); border-radius: 999px; padding: 4px 11px; font-size: 13px; }
+.selo.etiqueta { background: none; box-shadow: inset 0 0 0 1px var(--accent-2); color: var(--accent-ink); }
+
+/* ============ COMPROVANTE ============ */
+.foto-linha { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
+.foto-mini { width: 68px; height: 68px; padding: 0; border: 0; border-radius: 12px; overflow: hidden; background: var(--page); box-shadow: 0 0 0 1px var(--hair); flex: none; }
+.foto-mini img { width: 100%; height: 100%; object-fit: cover; display: block; }
+#dlg-foto { max-width: min(94vw, 900px); background: #000; }
+#dlg-foto img { display: block; width: 100%; max-height: 86vh; max-height: 86dvh; object-fit: contain; }
+#dlg-foto .icone { position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,.55); color: #fff; }
+
+/* ============ BUSCA AVANÇADA ============ */
+.filtros-av { margin-bottom: 12px; display: grid; gap: 12px; }
+.grade-filtros { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.faixa-busca {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; margin-bottom: 8px;
+  padding: 10px 12px; border-radius: 12px; background: var(--accent-track); color: var(--accent-ink); font-size: 13px; font-weight: 600;
+}
+.faixa-busca .espaco { flex: 1; }
+
+/* ============ LIMITE DIÁRIO E META DE ECONOMIA ============ */
+.limite-dia { margin-top: 12px; padding: 11px 12px; border-radius: 12px; background: var(--page); font-size: 13px; color: var(--ink-2); display: grid; gap: 8px; }
+.limite-dia strong { color: var(--ink); }
+.limite-dia .trilho { height: 6px; }
+.cofrinho-topo { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+.cofrinho-valor { font-size: 28px; font-weight: 700; letter-spacing: -0.025em; }
+.cofrinho .trilho { height: 10px; margin: 10px 0 8px; }
+.cofrinho .trilho span { background: var(--good); }
+.cofrinho .linhas { display: grid; gap: 4px; font-size: 13px; color: var(--ink-2); }
+.cofrinho .linhas strong { color: var(--ink); }
+
+/* ============ CATEGORIAS MÊS A MÊS ============ */
+.tabela-rolagem { overflow-x: auto; overscroll-behavior-x: contain; }
+.comparar { border-collapse: separate; border-spacing: 0; width: 100%; min-width: 600px; font-size: 13px; }
+.comparar th, .comparar td { padding: 9px 10px; text-align: right; white-space: nowrap; border-bottom: 1px solid var(--hair); font-weight: 500; }
+.comparar th:first-child { text-align: left; position: sticky; left: 0; z-index: 1; background: var(--surface); padding-left: 0; }
+.comparar thead th { font-size: 12px; color: var(--muted); font-weight: 600; }
+.comparar tbody th { font-size: 14px; color: var(--ink); }
+.comparar td { color: var(--ink-2); }
+.comparar td.atual, .comparar th.atual { color: var(--ink); font-weight: 650; }
+.comparar td button { border: 0; background: none; padding: 0; color: inherit; font: inherit; }
+.comparar .var { font-size: 12px; font-weight: 650; }
+.comparar .var.sobe { color: var(--critical); }
+.comparar .var.desce { color: var(--good); }
+.comparar tfoot th, .comparar tfoot td { color: var(--ink); font-weight: 750; border-bottom: 0; }
+
 /* ============ ANIMAÇÕES (desligadas se o aparelho pede menos movimento) ============ */
 @media (prefers-reduced-motion: no-preference) {
   /* Indicador das abas desliza com um leve "quique" */
@@ -524,6 +584,7 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <div class="coluna">
         <section class="cartao heroi" id="c-heroi"></section>
         <section class="cartao" id="c-receber" hidden></section>
+        <section class="cartao cofrinho" id="c-economia" hidden></section>
         <section class="cartao" aria-labelledby="t-dias">
           <div class="cab"><h2 id="t-dias">Por dia</h2><span class="sub">toque num dia pra ver o extrato</span></div>
           <div class="fita" id="fita" role="group" aria-label="Gasto por dia do mês"></div>
@@ -551,7 +612,16 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
           <div class="cab"><h2 id="t-rec">Gastos recorrentes</h2><span class="sub m" id="rec-total"></span></div>
           <ul class="lista" id="c-recorrentes"></ul>
         </section>
+        <section class="cartao" id="c-tags" aria-labelledby="t-tags" hidden>
+          <div class="cab"><h2 id="t-tags">Tags deste mês</h2><span class="sub">toque pra ver o total de sempre</span></div>
+          <ul class="lista" id="lista-tags-mes"></ul>
+        </section>
       </div>
+      <section class="cartao largo" aria-labelledby="t-comp">
+        <div class="cab"><h2 id="t-comp">Categorias mês a mês</h2><span class="sub" id="comp-sub"></span></div>
+        <div class="tabela-rolagem" id="c-comparar"></div>
+        <p class="legenda" id="comp-legenda"></p>
+      </section>
     </div>
   </section>
 
@@ -581,9 +651,27 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <div class="barra-extrato">
         <div class="tags" id="tags"></div>
         <span style="flex:1"></span>
+        <button class="texto-link" id="btn-busca-av" aria-expanded="false" aria-controls="filtros-av">Busca avançada</button>
         <button class="texto-link" id="btn-importar">Importar extrato</button>
         <button class="texto-link" id="btn-csv">Exportar CSV</button>
       </div>
+      <form class="cartao filtros-av" id="filtros-av" hidden>
+        <div class="grade-filtros">
+          <label>De <input type="date" name="de"></label>
+          <label>Até <input type="date" name="ate"></label>
+          <label>Valor mínimo (R$) <input name="min" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
+          <label>Valor máximo (R$) <input name="max" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
+          <label>Tag <select name="tag"></select></label>
+          <label>Categoria <select name="categoria"></select></label>
+        </div>
+        <p class="ajuda">Busca em todo o histórico, não só no mês. Os filtros de cima (forma, banco, texto) continuam valendo.</p>
+        <div class="botoes">
+          <button type="button" class="secundario" id="fa-limpar">Limpar</button>
+          <span class="espaco"></span>
+          <button type="submit" class="botao">Buscar</button>
+        </div>
+      </form>
+      <div class="faixa-busca" id="faixa-busca" hidden></div>
       <p class="sub m" id="extrato-total"></p>
       <ol id="lista-extrato"></ol>
     </div>
@@ -650,6 +738,26 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
             <label class="linha-campo"><span>Total do mês</span><input name="total" inputmode="decimal" placeholder="Sem meta" autocomplete="off"></label>
             <div id="metas-categorias" class="form-grade"></div>
             <button type="submit" class="botao">Salvar metas</button>
+          </form>
+        </section>
+        <section class="cartao">
+          <h2>Meta de economia</h2>
+          <p class="ajuda" style="margin-bottom:12px">Conta como guardado o saldo de cada mês (entradas menos gastos). Transferências entre suas contas não entram.</p>
+          <form id="form-economia" class="form-grade">
+            <label>Pra quê <input name="nome" maxlength="40" placeholder="Ex.: Viagem pros EUA" autocomplete="off"></label>
+            <div class="duas">
+              <label>Quanto quer juntar (R$) <input name="alvo" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
+              <label>Já tem guardado (R$) <input name="inicial" inputmode="decimal" placeholder="0,00" autocomplete="off"></label>
+            </div>
+            <div class="duas">
+              <label>Contar a partir de <input type="month" name="desde"></label>
+              <label>Prazo (opcional) <input type="month" name="ate"></label>
+            </div>
+            <div class="botoes">
+              <button type="button" class="perigo" id="btn-economia-tirar" hidden>Tirar meta</button>
+              <span class="espaco"></span>
+              <button type="submit" class="botao">Salvar meta</button>
+            </div>
           </form>
         </section>
       </div>
@@ -723,6 +831,13 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <ul class="combo-lista" id="lista-desc" role="listbox" aria-label="Descrições já usadas" hidden></ul>
     </div>
     <label>Categoria <select name="categoria"></select></label>
+    <div class="combo">
+      <label for="in-tag">Tags <span class="sub">opcional · ex.: viagem sp</span></label>
+      <div class="tags-caixa" id="tags-caixa">
+        <input id="in-tag" maxlength="30" placeholder="Digite e toque Enter" autocomplete="off" enterkeyhint="done">
+      </div>
+      <div class="tags-sugestoes" id="tags-sugestoes"></div>
+    </div>
     <div class="duas">
       <label>Forma
         <select name="meio"><option value="pix">Pix</option><option value="credito">Crédito</option><option value="debito">Débito</option></select>
@@ -760,6 +875,21 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <label class="check" id="linha-quitado" hidden><input type="checkbox" name="quitado"> Já me devolveram</label>
     </div>
 
+    <!-- Foto do comprovante -->
+    <div class="caixa" id="caixa-foto">
+      <div class="foto-linha">
+        <button type="button" class="foto-mini" id="foto-mini" aria-label="Ver comprovante" hidden><img alt="Comprovante"></button>
+        <div style="display:grid;gap:2px;flex:1;min-width:0">
+          <span id="foto-status" style="font-size:14px">Sem comprovante</span>
+          <div style="display:flex;gap:16px">
+            <button type="button" class="texto-link" id="btn-foto">Anexar foto</button>
+            <button type="button" class="perigo" id="btn-foto-tirar" style="padding:6px 0" hidden>Tirar foto</button>
+          </div>
+        </div>
+      </div>
+      <input type="file" id="in-foto" accept="image/*" hidden>
+    </div>
+
     <div class="botoes">
       <button type="button" class="perigo" id="btn-apagar" hidden>Apagar</button>
       <button type="button" class="perigo" id="btn-apagar-prox" hidden>Apagar este e os próximos</button>
@@ -768,6 +898,12 @@ body.carregando .aba { opacity: .55; transition: opacity .2s; }
       <button type="submit" class="botao" id="btn-salvar">Salvar</button>
     </div>
   </form>
+</dialog>
+
+<!-- ======================= JANELA: COMPROVANTE EM TELA CHEIA ======================= -->
+<dialog id="dlg-foto" aria-label="Comprovante">
+  <img alt="Comprovante do lançamento">
+  <button type="button" class="icone" data-fechar aria-label="Fechar"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
 </dialog>
 
 <!-- ======================= JANELA: IMPORTAR EXTRATO ======================= -->
@@ -917,6 +1053,7 @@ const estado = {
   inicioCarregado: null,
   listaVisivel: [],
   email: '',
+  av: null, avLista: [], avCarregando: false,   // busca avançada (todo o histórico)
 };
 const ehMesAtual = () => estado.ano === anoHoje && estado.mes === mesHoje;
 const ehMesFuturo = () => estado.ano * 12 + estado.mes > anoHoje * 12 + mesHoje;
@@ -941,10 +1078,26 @@ const doMes = (ano, mes) => { const [i, f] = limitesDoMes(ano, mes); return esta
    ===================================================================== */
 async function carregar() {
   document.body.classList.add('carregando');
-  // Desde 6 meses antes do mês exibido (evolução/recorrentes) ou 3 meses antes de hoje (fatura)
+  // Configurações primeiro: a meta de economia pode pedir lançamentos mais antigos
+  const [rMetas, rRegras, rConfig, rPend] = await Promise.all([
+    sb.from('metas').select('escopo, valor'),
+    sb.from('regras_categoria').select('id, padrao, categoria').order('padrao'),
+    sb.from('config').select('chave, valor'),
+    sb.from('pix_nao_reconhecido').select('*').order('criado_em', { ascending: false }),
+  ]);
+  estado.metas = new Map((rMetas.data || []).map((m) => [m.escopo, Number(m.valor)]));
+  estado.regras = rRegras.data || [];
+  estado.config = new Map((rConfig.data || []).map((c) => [c.chave, c.valor]));
+  estado.pendencias = rPend.data || [];
+
+  // Desde 6 meses antes do mês exibido (evolução/recorrentes), 3 meses antes de hoje (fatura)
+  // ou o início da meta de economia, o que for mais antigo
   const [aIni, mIni] = mesMais(estado.ano, estado.mes, -6);
   const [aFat, mFat] = mesMais(anoHoje, mesHoje, -3);
-  const inicio = new Date(Math.min(limitesDoMes(aIni, mIni)[0], limitesDoMes(aFat, mFat)[0]));
+  const datas = [limitesDoMes(aIni, mIni)[0], limitesDoMes(aFat, mFat)[0]];
+  const eco = metaEconomia();
+  if (eco) datas.push(limitesDoMes(...eco.desde.split('-').map(Number))[0]);
+  const inicio = new Date(Math.min(...datas));
 
   // Busca em páginas de 1000 (limite do Supabase por requisição)
   const linhas = [];
@@ -955,24 +1108,17 @@ async function carregar() {
     linhas.push(...data);
     if (data.length < 1000) break;
   }
-  const [rMetas, rRegras, rConfig, rPend] = await Promise.all([
-    sb.from('metas').select('escopo, valor'),
-    sb.from('regras_categoria').select('id, padrao, categoria').order('padrao'),
-    sb.from('config').select('chave, valor'),
-    sb.from('pix_nao_reconhecido').select('*').order('criado_em', { ascending: false }),
-  ]);
-  estado.todas = linhas.map((l) => {
-    const data = new Date(l.criado_em);
-    return { ...l, valor: Number(l.valor), a_receber: l.a_receber ? Number(l.a_receber) : null, data, dia: chaveDia(data) };
-  });
+  estado.todas = linhas.map(prepararLinha);
   estado.inicioCarregado = inicio;
-  estado.metas = new Map((rMetas.data || []).map((m) => [m.escopo, Number(m.valor)]));
-  estado.regras = rRegras.data || [];
-  estado.config = new Map((rConfig.data || []).map((c) => [c.chave, c.valor]));
-  estado.pendencias = rPend.data || [];
   document.body.classList.remove('carregando');
   animarGraficos();
+  if (estado.av) await buscarAvancado({ redesenhar: false });   // mantém a busca avançada atualizada
   desenhar();
+}
+// Linha do banco -> objeto do painel (números, data e dia no horário de Brasília)
+function prepararLinha(l) {
+  const data = new Date(l.criado_em);
+  return { ...l, valor: Number(l.valor), a_receber: l.a_receber ? Number(l.a_receber) : null, tags: l.tags || [], data, dia: chaveDia(data) };
 }
 
 /* =====================================================================
@@ -1028,10 +1174,11 @@ addEventListener('resize', moverIndicador);
 
 function desenhar() {
   // Topo: seletor de mês no Resumo/Extrato, título fixo nas outras abas
-  const comMes = estado.aba === 'resumo' || estado.aba === 'extrato';
+  const emBusca = estado.aba === 'extrato' && !!estado.av;
+  const comMes = (estado.aba === 'resumo' || estado.aba === 'extrato') && !emBusca;
   $('seletor-mes').hidden = !comMes;
   $('titulo-aba').hidden = comMes;
-  $('titulo-aba').textContent = TITULOS[estado.aba] || '';
+  $('titulo-aba').textContent = emBusca ? 'Busca' : TITULOS[estado.aba] || '';
   $('titulo-mes').textContent = capitalizar(nomeMes(estado.ano, estado.mes)) + (estado.ano !== anoHoje ? ` ${estado.ano}` : '');
   $('mes-prox').disabled = estado.ano * 12 + estado.mes >= ultimoMesComDados();
   $('btn-novo').hidden = estado.aba === 'ajustes';
@@ -1067,6 +1214,9 @@ function desenharResumo() {
   desenharSemana();
   desenharTop(gastos);
   desenharRecorrentes();
+  desenharEconomia();
+  desenharTagsMes(linhas);
+  desenharComparar();
 }
 
 function projecaoDoMes(gastos) {
@@ -1113,6 +1263,7 @@ function desenharHeroi(total, entradas, totalAnt, gastos, nomeAnt) {
       h('div', {}, h('dt', {}, 'Entradas'), h('dd', {}, R(entradas, entradas ? 'positivo' : ''))),
       h('div', {}, h('dt', {}, 'Saldo'), h('dd', {}, R(saldo, saldo < 0 ? 'negativo' : '')))),
     meta ? medidor('Meta do mês', total, meta) : null,
+    blocoLimiteDiario(gastos, meta),
   );
   contarAte(valorEl, total);
 }
@@ -1132,6 +1283,144 @@ function contarAte(el, alvo) {
     if (t < 1) contarAte.quadro = requestAnimationFrame(passo);
   };
   contarAte.quadro = requestAnimationFrame(passo);
+}
+
+/* ---------- Limite por dia: quanto dá pra gastar até o fim do mês sem passar da meta ---------- */
+function blocoLimiteDiario(gastos, meta) {
+  if (!ehMesAtual()) return null;
+  if (!meta) return h('p', { class: 'ajuda', style: 'margin-top:12px' }, 'Com uma meta do mês, aparece aqui quanto dá pra gastar por dia. ',
+    h('button', { class: 'texto-link', onclick: () => irPara('ajustes') }, 'Definir meta'));
+  const agora = new Date();
+  const hoje = chaveDia(agora);
+  const antesDeHoje = soma(gastos.filter((l) => l.dia < hoje));
+  const hojeGasto = soma(gastos.filter((l) => l.dia === hoje && l.data <= agora));
+  const marcados = soma(gastos.filter((l) => l.data > agora));          // parcelas e mensais que ainda vão cair
+  const diasRestantes = diasNoMes(estado.ano, estado.mes) - diaHoje + 1;  // conta hoje
+  const limite = (meta - antesDeHoje - marcados) / diasRestantes;
+  if (limite <= 0) return h('div', { class: 'limite-dia' },
+    statusEl({ classe: 'estourou', icone: '!' }, 'A meta do mês já está toda usada ou comprometida com parcelas.'));
+  const passou = hojeGasto - limite;
+  const s = passou > 0 ? { classe: 'estourou', icone: '!' } : hojeGasto >= 0.8 * limite ? { classe: 'perto', icone: '!' } : { classe: 'ok', icone: '✓' };
+  return h('div', { class: 'limite-dia medidor ' + s.classe },
+    h('span', {}, 'Pra fechar o mês na meta: até ', h('strong', {}, R(limite)), ` por dia (${diasRestantes} ${diasRestantes === 1 ? 'dia' : 'dias'}, contando hoje).`),
+    h('div', { class: 'trilho', role: 'meter', 'aria-label': 'Gasto de hoje', 'aria-valuemin': 0, 'aria-valuemax': limite, 'aria-valuenow': Math.min(hojeGasto, limite) },
+      h('span', { vars: { '--p': Math.min(hojeGasto / limite, 1) } })),
+    statusEl(s, passou > 0 ? ['Hoje: ', R(hojeGasto), ', passou ', R(passou), ' do limite'] : ['Hoje: ', R(hojeGasto), ' de ', R(limite)]));
+}
+
+/* ---------- Meta de economia (fica em config.meta_economia) ---------- */
+function metaEconomia() {
+  try {
+    const m = JSON.parse(estado.config.get('meta_economia') || 'null');
+    return m && m.alvo > 0 && /^\d{4}-\d{2}$/.test(m.desde) ? m : null;
+  } catch { return null; }
+}
+function calcularEconomia(m) {
+  const agora = new Date();
+  const inicio = limitesDoMes(...m.desde.split('-').map(Number))[0];
+  const linhas = estado.todas.filter((l) => l.data >= inicio && l.data <= agora);
+  const saldo = (ls) => soma(ls.filter(ehEntrada)) - soma(ls.filter(ehGasto));   // entradas − gastos (sem transferências)
+  const guardado = (Number(m.inicial) || 0) + saldo(linhas);
+  const esteMes = saldo(linhas.filter((l) => l.data >= limitesDoMes(anoHoje, mesHoje)[0]));
+  let porMes = null, mesesRestantes = null;
+  if (m.ate) {
+    const [aa, ma] = m.ate.split('-').map(Number);
+    mesesRestantes = aa * 12 + ma - (anoHoje * 12 + mesHoje) + 1;       // inclui o mês atual
+    if (mesesRestantes > 0) porMes = Math.max(0, m.alvo - guardado) / mesesRestantes;
+  }
+  return { guardado, esteMes, porMes, mesesRestantes };
+}
+function desenharEconomia() {
+  const c = $('c-economia');
+  const m = metaEconomia();
+  c.hidden = !m;
+  if (!m) return;
+  const { guardado, esteMes, porMes, mesesRestantes } = calcularEconomia(m);
+  const p = Math.max(0, Math.min(guardado / m.alvo, 1));
+  const falta = m.alvo - guardado;
+  const [aa, ma] = (m.ate || '0-0').split('-').map(Number);
+  trocar(c,
+    h('div', { class: 'cab' }, h('h2', {}, m.nome || 'Meta de economia'), h('span', { class: 'sub' }, `${Math.round(p * 100)}% guardado`)),
+    h('div', { class: 'cofrinho-topo' }, h('span', { class: 'cofrinho-valor m' }, brl.format(guardado)), h('span', { class: 'sub' }, 'de ', R(m.alvo))),
+    h('div', { class: 'trilho', role: 'meter', 'aria-label': 'Progresso da meta de economia', 'aria-valuemin': 0, 'aria-valuemax': m.alvo, 'aria-valuenow': Math.max(0, Math.min(guardado, m.alvo)) },
+      h('span', { vars: { '--p': p } })),
+    h('div', { class: 'linhas' },
+      falta > 0 ? h('span', {}, 'Faltam ', h('strong', {}, R(falta))) : h('span', {}, h('strong', {}, 'Meta alcançada.'), ' Passou ', R(-falta), ' do alvo.'),
+      h('span', {}, 'Este mês até agora: ', h('strong', { class: esteMes < 0 ? 'negativo' : '' }, R(esteMes)), esteMes < 0 ? ' (saiu mais do que entrou)' : ''),
+      falta > 0 && porMes != null ? h('span', {}, `Pra chegar até ${nomeMes(aa, ma)}${aa !== anoHoje ? ' de ' + aa : ''}: guardar `, h('strong', {}, R(porMes)), ' por mês') : null,
+      falta > 0 && m.ate && mesesRestantes <= 0 ? h('span', {}, 'O prazo já passou. Dá pra mudar em Ajustes.') : null));
+}
+
+/* ---------- Tags ---------- */
+// Tags já usadas, das mais frequentes pras menos
+function todasAsTags() {
+  const cont = new Map();
+  for (const l of estado.todas) for (const t of l.tags) cont.set(t, (cont.get(t) || 0) + 1);
+  return [...cont].sort((a, b) => b[1] - a[1]).map(([t]) => t);
+}
+function desenharTagsMes(linhas) {
+  const porTag = new Map();
+  for (const l of linhas) if (ehGasto(l)) for (const t of l.tags) porTag.set(t, (porTag.get(t) || 0) + parte(l));
+  $('c-tags').hidden = !porTag.size;
+  trocar($('lista-tags-mes'), [...porTag].sort((a, b) => b[1] - a[1]).map(([t, v]) => h('li', {},
+    h('button', { class: 'texto-link', style: 'font-size:15px', onclick: () => abrirBuscaTag(t) }, '#' + t), R(v, 'v'))));
+}
+// Mostra no Extrato tudo que tem a tag, de qualquer mês
+function abrirBuscaTag(tag) {
+  estado.av = { tag };
+  estado.avLista = [];
+  estado.avCarregando = true;   // mostra "Buscando…" em vez de "nada encontrado"
+  irPara('extrato');
+  buscarAvancado();
+}
+
+/* ---------- Categorias mês a mês (6 meses até o exibido) ---------- */
+const brlInteiro = new Intl.NumberFormat('pt-BR', { maximumFractionDigits: 0 });
+function desenharComparar() {
+  const meses = Array.from({ length: 6 }, (_, i) => mesMais(estado.ano, estado.mes, i - 5));
+  const porMes = meses.map(([a, m]) => agrupar(doMes(a, m).filter(ehGasto), categoriaDe));
+  // Variação: mês exibido vs o anterior. No mês atual, compara só até hoje com o mesmo período do anterior.
+  const agora = new Date();
+  const [aAnt, mAnt] = meses[4];
+  const atualComp = agrupar(doMes(estado.ano, estado.mes).filter(ehGasto).filter((l) => !ehMesAtual() || l.data <= agora), categoriaDe);
+  const antComp = agrupar(doMes(aAnt, mAnt).filter(ehGasto).filter((l) => !ehMesAtual() || Number(l.dia.slice(8)) <= diaHoje), categoriaDe);
+  const cats = [...new Set(porMes.flatMap((mp) => [...mp.keys()]))]
+    .map((c) => [c, porMes.reduce((t, mp) => t + (mp.get(c) || 0), 0)]).sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  $('comp-sub').textContent = 'em R$';
+  $('comp-legenda').textContent = '';
+  if (!cats.length) return trocar($('c-comparar'), h('p', { class: 'vazio' }, 'Sem gastos nesses meses.'));
+  const somaMapa = (mp) => [...mp.values()].reduce((t, v) => t + v, 0);
+  const celula = (v, [a, m], cat, atual) => h('td', { class: atual ? 'atual m' : 'm' }, v
+    ? h('button', { onclick: () => irParaCategoria(cat, a, m), 'aria-label': `${cat} em ${nomeMes(a, m)}: ${brl.format(v)}. Ver no extrato.` }, brlInteiro.format(v))
+    : '—');
+  const variacao = (agoraV, antes) => {
+    if (!antes && !agoraV) return h('td', { class: 'var' }, '');
+    if (!antes) return h('td', { class: 'var sobe' }, 'novo');
+    const pct = Math.round(((agoraV - antes) / antes) * 100);
+    if (!pct) return h('td', { class: 'var' }, '0%');
+    return h('td', { class: 'var ' + (pct > 0 ? 'sobe' : 'desce') }, `${pct > 0 ? '▲' : '▼'} ${Math.abs(pct)}%`);
+  };
+  const rotulo = ([a, m]) => capitalizar(nomeMesCurto(a, m)) + (a !== anoHoje ? ` ${String(a).slice(2)}` : '');
+  trocar($('c-comparar'), h('table', { class: 'comparar' },
+    h('thead', {}, h('tr', {}, h('th', { scope: 'col' }, 'Categoria'),
+      meses.map((mm, i) => h('th', { scope: 'col', class: i === 5 ? 'atual' : '' }, rotulo(mm))),
+      h('th', { scope: 'col' }, `vs ${rotulo(meses[4])}`))),
+    h('tbody', {}, cats.map((cat) => h('tr', {}, h('th', { scope: 'row' }, cat),
+      meses.map((mm, i) => celula(porMes[i].get(cat) || 0, mm, cat, i === 5)),
+      variacao(atualComp.get(cat) || 0, antComp.get(cat) || 0)))),
+    h('tfoot', {}, h('tr', {}, h('th', { scope: 'row' }, 'Total'),
+      porMes.map((mp, i) => h('td', { class: i === 5 ? 'atual m' : 'm' }, brlInteiro.format(somaMapa(mp)))),
+      variacao(somaMapa(atualComp), somaMapa(antComp))))));
+  $('comp-legenda').textContent = ehMesAtual()
+    ? `A última coluna compara ${nomeMes(estado.ano, estado.mes)} até o dia ${diaHoje} com o mesmo período de ${nomeMes(aAnt, mAnt)}. Toque num valor pra ver no extrato.`
+    : 'Toque num valor pra ver no extrato.';
+  // No celular a tabela rola de lado: começa mostrando o mês exibido e a variação
+  const caixa = $('c-comparar');
+  requestAnimationFrame(() => { caixa.scrollLeft = caixa.scrollWidth; });
+}
+function irParaCategoria(cat, a, m) {
+  Object.assign(estado, { ano: a, mes: m, categoria: cat, dia: null, av: null, avLista: [] });
+  irPara('extrato');
 }
 
 // Situação de uma meta: dentro, perto (80%+) ou estourada
@@ -1367,13 +1656,16 @@ function desenharRecorrentes() {
    ABA EXTRATO
    ===================================================================== */
 function desenharExtrato() {
-  let lista = doMes(estado.ano, estado.mes).filter(passaFiltros);
+  const emBusca = !!estado.av;
+  desenharFaixaBusca();
+  let lista = (emBusca ? estado.avLista : doMes(estado.ano, estado.mes)).filter(passaFiltros);
   if (!estado.mostrarTransf) lista = lista.filter((l) => l.categoria !== 'Transferência');
-  if (estado.dia) lista = lista.filter((l) => l.dia === estado.dia);
-  if (estado.categoria) lista = lista.filter((l) => ehGasto(l) && categoriaDe(l) === estado.categoria);
+  if (!emBusca && estado.dia) lista = lista.filter((l) => l.dia === estado.dia);
+  if (!emBusca && estado.categoria) lista = lista.filter((l) => ehGasto(l) && categoriaDe(l) === estado.categoria);
   if (estado.busca) {
     const b = normalizar(estado.busca);
-    lista = lista.filter((l) => normalizar(l.descricao).includes(b) || normalizar(categoriaDe(l)).includes(b) || normalizar(l.devedor).includes(b));
+    lista = lista.filter((l) => normalizar(l.descricao).includes(b) || normalizar(categoriaDe(l)).includes(b)
+      || normalizar(l.devedor).includes(b) || l.tags.some((t) => normalizar(t).includes(b)));
   }
   estado.listaVisivel = lista;
 
@@ -1381,15 +1673,20 @@ function desenharExtrato() {
   const tags = [];
   const tag = (texto, limpar) => tags.push(h('span', { class: 'tag' }, texto,
     h('button', { 'aria-label': `Remover filtro ${texto}`, onclick: () => { limpar(); desenhar(); } }, '×')));
-  if (estado.dia) tag(fmtDiaMes.format(dataDaChave(estado.dia)), () => (estado.dia = null));
-  if (estado.categoria) tag(estado.categoria, () => (estado.categoria = null));
+  if (!emBusca && estado.dia) tag(fmtDiaMes.format(dataDaChave(estado.dia)), () => (estado.dia = null));
+  if (!emBusca && estado.categoria) tag(estado.categoria, () => (estado.categoria = null));
   if (estado.busca) tag(`"${estado.busca}"`, () => { estado.busca = ''; $('busca').value = ''; });
   trocar($('tags'), ...tags);
 
   const gastoLista = soma(lista.filter(ehGasto));
-  trocar($('extrato-total'), ...(lista.length ? [`${lista.length} lançamento(s) · gasto `, R(gastoLista)] : []));
+  const entradaLista = soma(lista.filter(ehEntrada));
+  trocar($('extrato-total'), ...(lista.length ? [`${lista.length} lançamento(s) · gasto `, R(gastoLista),
+    entradaLista ? [' · entrada ', R(entradaLista)] : null,
+    emBusca && estado.avLista.length >= 2000 ? ' · mostrando os 2.000 mais recentes' : null] : []));
 
   const ol = $('lista-extrato');
+  if (emBusca && estado.avCarregando) return trocar(ol, h('li', { class: 'vazio' }, 'Buscando…'));
+  if (emBusca && !lista.length) return trocar(ol, h('li', { class: 'vazio' }, 'Nada encontrado com esses filtros em todo o histórico.'));
   if (!lista.length) {
     trocar(ol, h('li', { class: 'vazio' }, tags.length
       ? ['Nada encontrado com esses filtros. ', h('button', { class: 'texto-link', onclick: limparFiltros }, 'Limpar filtros')]
@@ -1402,12 +1699,92 @@ function desenharExtrato() {
     if (l.dia !== diaAtual) {
       diaAtual = l.dia;
       const g = soma(lista.filter((x) => x.dia === diaAtual && ehGasto(x)));
-      itens.push(h('li', { class: 'grupo' }, h('span', {}, capitalizar(fmtDiaLongo.format(l.data))), g ? h('span', {}, '−', R(g)) : h('span')));
+      const ano = Number(l.dia.slice(0, 4));
+      itens.push(h('li', { class: 'grupo' }, h('span', {}, capitalizar(fmtDiaLongo.format(l.data)) + (ano !== anoHoje ? ` de ${ano}` : '')),
+        g ? h('span', {}, '−', R(g)) : h('span')));
     }
     itens.push(h('li', {}, elementoItem(l)));
   }
   trocar(ol, ...itens);
 }
+/* ---------- Busca avançada: todo o histórico, direto no banco ---------- */
+function desenharFaixaBusca() {
+  const faixa = $('faixa-busca');
+  const av = estado.av;
+  faixa.hidden = !av;
+  if (!av) return;
+  const d = (k) => fmtData.format(dataDaChave(k));
+  const partes = [];
+  if (av.de || av.ate) partes.push(av.de && av.ate ? `${d(av.de)} a ${d(av.ate)}` : av.de ? `desde ${d(av.de)}` : `até ${d(av.ate)}`);
+  if (av.min || av.max) partes.push(av.min && av.max ? `${brl.format(av.min)} a ${brl.format(av.max)}` : av.min ? `a partir de ${brl.format(av.min)}` : `até ${brl.format(av.max)}`);
+  if (av.tag) partes.push('#' + av.tag);
+  if (av.categoria) partes.push(av.categoria);
+  trocar(faixa, h('span', {}, 'Todo o histórico: ' + partes.join(' · ')), h('span', { class: 'espaco' }),
+    h('button', { class: 'texto-link', onclick: () => abrirFiltrosAv(true) }, 'Editar'),
+    h('button', { class: 'texto-link', onclick: sairBuscaAvancada }, 'Sair da busca'));
+}
+function abrirFiltrosAv(abrir) {
+  const form = $('filtros-av');
+  if (abrir) {
+    const f = form.elements, av = estado.av || {};
+    f.de.value = av.de || ''; f.ate.value = av.ate || '';
+    f.min.value = valorCampo(av.min); f.max.value = valorCampo(av.max);
+    trocar(f.tag, h('option', { value: '' }, 'Qualquer'),
+      [...new Set([...todasAsTags(), av.tag].filter(Boolean))].map((t) => h('option', { value: t }, '#' + t)));
+    f.tag.value = av.tag || '';
+    trocar(f.categoria, h('option', { value: '' }, 'Qualquer'), [...categoriasDoUsuario(), ...ESPECIAIS].map((c) => h('option', { value: c }, c)));
+    f.categoria.value = av.categoria || '';
+  }
+  form.hidden = !abrir;
+  $('btn-busca-av').setAttribute('aria-expanded', String(abrir));
+}
+$('btn-busca-av').addEventListener('click', () => abrirFiltrosAv($('filtros-av').hidden));
+$('filtros-av').addEventListener('submit', (ev) => {
+  ev.preventDefault();
+  const f = ev.target.elements;
+  const av = {};
+  if (f.de.value) av.de = f.de.value;
+  if (f.ate.value) av.ate = f.ate.value;
+  if (f.min.value.trim()) { av.min = lerValor(f.min.value); if (!av.min) return avisar('Valor mínimo inválido.', true); }
+  if (f.max.value.trim()) { av.max = lerValor(f.max.value); if (!av.max) return avisar('Valor máximo inválido.', true); }
+  if (av.min && av.max && av.min > av.max) return avisar('O valor mínimo está maior que o máximo.', true);
+  if (av.de && av.ate && av.de > av.ate) return avisar('A data "De" está depois da data "Até".', true);
+  if (f.tag.value) av.tag = f.tag.value;
+  if (f.categoria.value) av.categoria = f.categoria.value;
+  if (!Object.keys(av).length) return avisar('Preencha pelo menos um filtro.', true);
+  estado.av = av;
+  estado.avLista = [];
+  abrirFiltrosAv(false);
+  buscarAvancado();
+});
+$('fa-limpar').addEventListener('click', () => { $('filtros-av').reset(); sairBuscaAvancada(); });
+function sairBuscaAvancada() {
+  estado.av = null;
+  estado.avLista = [];
+  abrirFiltrosAv(false);
+  animarEntrada('baixo');
+  desenhar();
+}
+async function buscarAvancado({ redesenhar = true } = {}) {
+  const av = estado.av;
+  if (!av) return;
+  estado.avCarregando = true;
+  if (redesenhar) desenhar();
+  let q = sb.from('gastos').select('*').order('criado_em', { ascending: false }).limit(2000);
+  if (av.de) q = q.gte('criado_em', new Date(`${av.de}T00:00:00-03:00`).toISOString());
+  if (av.ate) q = q.lt('criado_em', new Date(new Date(`${av.ate}T00:00:00-03:00`).getTime() + 864e5).toISOString());
+  if (av.min) q = q.gte('valor', av.min);
+  if (av.max) q = q.lte('valor', av.max);
+  if (av.tag) q = q.contains('tags', [av.tag]);
+  if (av.categoria) q = q.eq('categoria', av.categoria);
+  const { data, error } = await q;
+  estado.avCarregando = false;
+  if (estado.av !== av) return;                       // a busca mudou enquanto esperava
+  if (error) { estado.avLista = []; avisar('Não deu pra buscar: ' + error.message, true); }
+  else estado.avLista = data.map(prepararLinha);
+  if (redesenhar) { animarEntrada('baixo'); desenhar(); }
+}
+
 function limparFiltros() {
   Object.assign(estado, { dia: null, categoria: null, busca: '' });
   $('busca').value = '';
@@ -1420,6 +1797,9 @@ function elementoItem(l) {
   if (l.recorrencia_grupo) selos.push(h('span', { class: 'selo azul' }, 'mensal'));
   if (l.a_receber) selos.push(h('span', { class: 'selo' }, l.quitado ? 'devolvido' : [`${l.devedor || 'alguém'} deve `, R(l.a_receber)]));
   if (l.origem === 'importado') selos.push(h('span', { class: 'selo' }, 'importado'));
+  if (l.origem === 'voz') selos.push(h('span', { class: 'selo' }, 'por voz'));
+  if (l.comprovante) selos.push(h('span', { class: 'selo' }, 'comprovante'));
+  for (const t of l.tags || []) selos.push(h('span', { class: 'selo etiqueta' }, '#' + t));
   const info = [categoriaDe(l), NOME_MEIO[l.meio] || l.meio, NOME_BANCO[l.banco], fmtHora.format(l.data)].filter(Boolean).join(' · ');
   return h('button', { class: 'item' + (l.categoria === 'Transferência' ? ' transf' : ''), onclick: () => abrirLancamento(l),
     'aria-label': `Editar ${l.descricao}, ${brl.format(l.valor)}` },
@@ -1655,6 +2035,7 @@ function desenharAjustes() {
   $('form-metas').elements.total.value = valorCampo(estado.metas.get('total'));
   trocar($('metas-categorias'), ...todasCategorias().map((cat) => h('label', { class: 'linha-campo' },
     h('span', {}, cat), h('input', { name: 'cat:' + cat, inputMode: 'decimal', placeholder: 'Sem meta', autocomplete: 'off', value: valorCampo(estado.metas.get(cat)) }))));
+  preencherEconomia();
   // Categorias e regras
   desenharCategoriasAjuste();
   desenharRegras();
@@ -1718,6 +2099,47 @@ $('form-cartao').addEventListener('submit', async (ev) => {
   if (error) return avisar('Não deu pra salvar: ' + error.message, true);
   avisar('Configuração salva');
   carregar();
+});
+
+// Meta de economia
+function preencherEconomia() {
+  const f = $('form-economia').elements;
+  const m = metaEconomia();
+  f.nome.value = m?.nome || '';
+  f.alvo.value = valorCampo(m?.alvo);
+  f.inicial.value = valorCampo(m?.inicial);
+  f.desde.value = m?.desde || `${anoHoje}-${pad(mesHoje)}`;
+  f.ate.value = m?.ate || '';
+  $('btn-economia-tirar').hidden = !m;
+}
+$('form-economia').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const f = ev.target.elements;
+  const alvo = lerValor(f.alvo.value);
+  if (!alvo) return avisar('Coloque quanto você quer juntar.', true);
+  const inicial = f.inicial.value.trim() ? lerNumero(f.inicial.value) : 0;
+  if (inicial == null || inicial < 0) return avisar('O valor já guardado está inválido.', true);
+  const desde = /^\d{4}-\d{2}$/.test(f.desde.value) ? f.desde.value : `${anoHoje}-${pad(mesHoje)}`;
+  if (f.ate.value && !/^\d{4}-\d{2}$/.test(f.ate.value)) return avisar('Prazo inválido. Use mês e ano.', true);
+  if (f.ate.value && f.ate.value < desde) return avisar('O prazo precisa ser depois do início.', true);
+  const valor = JSON.stringify({ nome: f.nome.value.trim(), alvo, inicial: arred(inicial), desde, ate: f.ate.value || '' });
+  const { error } = await sb.from('config').upsert({ chave: 'meta_economia', valor });
+  if (error) return avisar('Não deu pra salvar: ' + error.message, true);
+  estado.config.set('meta_economia', valor);
+  avisar('Meta de economia salva. Ela aparece no Resumo.');
+  carregar();   // pode precisar de lançamentos mais antigos
+});
+$('btn-economia-tirar').addEventListener('click', async (ev) => {
+  const b = ev.currentTarget;
+  if (!b.dataset.confirmar) { b.dataset.confirmar = '1'; b.textContent = 'Toque de novo pra tirar'; return; }
+  delete b.dataset.confirmar;
+  b.textContent = 'Tirar meta';
+  const { error } = await sb.from('config').delete().eq('chave', 'meta_economia');
+  if (error) return avisar('Não deu pra tirar: ' + error.message, true);
+  estado.config.delete('meta_economia');
+  $('form-economia').reset();
+  avisar('Meta de economia tirada');
+  desenhar();
 });
 
 $('form-metas').addEventListener('submit', async (ev) => {
@@ -1838,6 +2260,10 @@ function abrirLancamento(l = null, sugestao = null) {
   delete prox.dataset.confirmar;
   if (l?.recorrencia_grupo) apagar.textContent = 'Apagar só este';
   fecharListaDesc();
+  tagsDialogo = [...(l?.tags || [])];
+  $('in-tag').value = '';
+  desenharTagsDialogo();
+  prepararFoto(l);
   atualizarCamposDialogo();
   $('dlg-lanc').showModal();
   if (!l) f.valor.focus();
@@ -1936,6 +2362,131 @@ $('dlg-lanc').addEventListener('pointerdown', () => { ponteiroAbaixo = true; }, 
 addEventListener('pointerup', () => setTimeout(() => { ponteiroAbaixo = false; }, 0), true);
 addEventListener('pointercancel', () => { ponteiroAbaixo = false; }, true);
 $('dlg-lanc').addEventListener('click', (ev) => { if (!comboDesc.contains(ev.target)) fecharListaDesc(); });
+/* ---------- Tags do lançamento ---------- */
+let tagsDialogo = [];
+const normTag = (t) => String(t).replace(/^#/, '').replace(/\s+/g, ' ').trim().toLowerCase().slice(0, 30);
+function desenharTagsDialogo() {
+  const input = $('in-tag');
+  $('tags-caixa').querySelectorAll('.tag-chip').forEach((c) => c.remove());   // o campo fica (não perde o foco)
+  input.before(...tagsDialogo.map((t) => h('span', { class: 'tag-chip' }, t,
+    h('button', { type: 'button', 'aria-label': `Tirar a tag ${t}`, onclick: () => {
+      tagsDialogo = tagsDialogo.filter((x) => x !== t);
+      desenharTagsDialogo();
+    } }, '×'))));
+  input.placeholder = tagsDialogo.length ? 'Outra tag' : 'Digite e toque Enter';
+  const sugestoes = todasAsTags().filter((t) => !tagsDialogo.includes(t)).slice(0, 6);
+  trocar($('tags-sugestoes'), sugestoes.map((t) => h('button', { type: 'button', onclick: () => adicionarTag(t) }, '+ ' + t)));
+}
+function adicionarTag(texto) {
+  const t = normTag(texto);
+  if (t && !tagsDialogo.includes(t)) tagsDialogo.push(t);
+  $('in-tag').value = '';
+  desenharTagsDialogo();
+}
+$('in-tag').addEventListener('keydown', (ev) => {
+  if (ev.key === 'Enter' || ev.key === ',') { ev.preventDefault(); if (ev.target.value.trim()) adicionarTag(ev.target.value); }
+  else if (ev.key === 'Backspace' && !ev.target.value && tagsDialogo.length) { tagsDialogo.pop(); desenharTagsDialogo(); }
+});
+// Teclados de celular nem sempre mandam a tecla da vírgula: confere o texto
+$('in-tag').addEventListener('input', (ev) => { if (ev.target.value.includes(',')) adicionarTag(ev.target.value.replace(/,/g, '')); });
+$('tags-caixa').addEventListener('click', (ev) => { if (ev.target === ev.currentTarget) $('in-tag').focus(); });
+
+/* ---------- Foto do comprovante (pasta privada "comprovantes" no Supabase) ---------- */
+const PASTA_FOTOS = 'comprovantes';
+let fotoNova = null;        // foto escolhida agora (sobe ao salvar)
+let fotoTirar = false;      // pediu pra apagar a foto que já existia
+let fotoUrl = null;         // endereço da imagem mostrada na miniatura
+function prepararFoto(l) {
+  fotoNova = null;
+  fotoTirar = false;
+  if (fotoUrl?.startsWith('blob:')) URL.revokeObjectURL(fotoUrl);
+  fotoUrl = null;
+  atualizarFoto();
+  if (!l?.comprovante) return;
+  // Link temporário (1 hora): a pasta é privada
+  sb.storage.from(PASTA_FOTOS).createSignedUrl(l.comprovante, 3600).then(({ data, error }) => {
+    if (editando !== l || fotoNova) return;
+    if (error) { $('foto-status').textContent = 'Não deu pra carregar a foto'; return; }
+    fotoUrl = data.signedUrl;
+    atualizarFoto();
+  });
+}
+function atualizarFoto() {
+  const temAtual = !!editando?.comprovante && !fotoTirar;
+  const mostra = fotoNova || temAtual;
+  const mini = $('foto-mini');
+  mini.hidden = !(mostra && fotoUrl);
+  if (fotoUrl) mini.querySelector('img').src = fotoUrl;
+  $('foto-status').textContent = fotoNova ? 'Foto nova: sobe quando você salvar'
+    : temAtual ? 'Comprovante anexado' : fotoTirar ? 'A foto vai ser apagada quando você salvar' : 'Sem comprovante';
+  $('btn-foto').textContent = mostra ? 'Trocar foto' : 'Anexar foto';
+  $('btn-foto-tirar').hidden = !mostra;
+}
+// Reduz a foto (lado maior até 1600 px, JPEG): cabe muito mais no espaço grátis
+async function comprimirFoto(arquivo) {
+  const url = URL.createObjectURL(arquivo);
+  try {
+    const img = await new Promise((ok, falha) => { const i = new Image(); i.onload = () => ok(i); i.onerror = falha; i.src = url; });
+    const escala = Math.min(1, 1600 / Math.max(img.naturalWidth, img.naturalHeight));
+    const tela = h('canvas', { width: Math.round(img.naturalWidth * escala), height: Math.round(img.naturalHeight * escala) });
+    tela.getContext('2d').drawImage(img, 0, 0, tela.width, tela.height);
+    return await new Promise((ok) => tela.toBlob(ok, 'image/jpeg', 0.8));
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+}
+$('btn-foto').addEventListener('click', () => $('in-foto').click());
+$('in-foto').addEventListener('change', async (ev) => {
+  const arquivo = ev.target.files[0];
+  ev.target.value = '';
+  if (!arquivo) return;
+  try {
+    const blob = await comprimirFoto(arquivo);
+    if (!blob) throw new Error('imagem vazia');
+    if (fotoUrl?.startsWith('blob:')) URL.revokeObjectURL(fotoUrl);
+    fotoNova = blob;
+    fotoTirar = false;
+    fotoUrl = URL.createObjectURL(blob);
+    atualizarFoto();
+  } catch {
+    avisar('Não deu pra ler essa imagem. Tente uma foto JPG ou um print da tela.', true);
+  }
+});
+$('btn-foto-tirar').addEventListener('click', () => {
+  if (fotoNova) { fotoNova = null; if (fotoUrl?.startsWith('blob:')) URL.revokeObjectURL(fotoUrl); fotoUrl = null; prepararFoto(editando); return; }
+  fotoTirar = true;
+  atualizarFoto();
+});
+$('foto-mini').addEventListener('click', () => {
+  if (!fotoUrl) return;
+  $('dlg-foto').querySelector('img').src = fotoUrl;
+  $('dlg-foto').showModal();
+});
+// Sobe ou apaga a foto depois que o lançamento foi salvo. Devolve o erro (texto) ou null.
+async function salvarFoto(id) {
+  const antiga = editando?.comprovante || null;
+  try {
+    if (fotoNova) {
+      const caminho = `${id}/${Date.now()}.jpg`;
+      const { error } = await sb.storage.from(PASTA_FOTOS).upload(caminho, fotoNova, { contentType: 'image/jpeg' });
+      if (error) throw error;
+      const { error: e2 } = await sb.from('gastos').update({ comprovante: caminho }).eq('id', id);
+      if (e2) throw e2;
+      if (antiga) await sb.storage.from(PASTA_FOTOS).remove([antiga]);
+    } else if (fotoTirar && antiga) {
+      const { error } = await sb.from('gastos').update({ comprovante: null }).eq('id', id);
+      if (error) throw error;
+      await sb.storage.from(PASTA_FOTOS).remove([antiga]);
+    }
+    return null;
+  } catch (e) {
+    return e.message || String(e);
+  }
+}
+function apagarFotos(caminhos) {
+  if (caminhos.length) sb.storage.from(PASTA_FOTOS).remove(caminhos);   // se falhar, só sobra o arquivo
+}
+
 // Trocou entre Saída e Entrada com a lista aberta: mostra as descrições do outro tipo
 formLanc.querySelectorAll('[name="tipo"]').forEach((r) => r.addEventListener('change', () => { if (!listaDesc.hidden) abrirListaDesc(); }));
 
@@ -1946,6 +2497,7 @@ formLanc.addEventListener('submit', async (ev) => {
   if (!valor) return avisar('Valor inválido. Use, por exemplo, 12,90.', true);
   if (!f.descricao.value.trim()) return avisar('Preencha a descrição.', true);
   if (!f.quando.value) return avisar('Preencha a data e a hora.', true);
+  if ($('in-tag').value.trim()) adicionarTag($('in-tag').value);   // tag digitada sem Enter também vale
   if (f.repetir.checked && !editando?.recorrencia_grupo && (!f.repetir_ate.value || f.repetir_ate.value <= f.quando.value.slice(0, 10)))
     return avisar('Escolha até quando repetir (uma data depois do lançamento).', true);
   const saida = f.tipo.value === 'saida';
@@ -1961,7 +2513,9 @@ formLanc.addEventListener('submit', async (ev) => {
     criado_em: new Date(`${f.quando.value}:00-03:00`).toISOString(),
     a_receber: aReceber, devedor: aReceber ? f.devedor.value.trim() || null : null,
     quitado: aReceber ? f.quitado.checked : false,
+    tags: [...tagsDialogo],
   };
+  let erroFoto = null;
   const botao = $('btn-salvar');
   botao.disabled = true;
   try {
@@ -1972,19 +2526,20 @@ formLanc.addEventListener('submit', async (ev) => {
       if (error) throw error;
       // Descrição/categoria valem pra todas as parcelas da compra
       if (editando.parcela_grupo) {
-        const { error: e2 } = await sb.from('gastos').update({ descricao: registro.descricao, categoria: registro.categoria }).eq('parcela_grupo', editando.parcela_grupo);
+        const { error: e2 } = await sb.from('gastos').update({ descricao: registro.descricao, categoria: registro.categoria, tags: registro.tags }).eq('parcela_grupo', editando.parcela_grupo);
         if (e2) throw e2;
       }
       const n = Number(f.parcelas.value);
       if (!editando.parcela_total && n > 1 && registro.meio === 'credito' && saida) await parcelar(editando.id, n);
       // Mensal: leva valor/descrição/categoria/forma/banco pros meses seguintes
       if (editando.recorrencia_grupo && f.aplicar_proximos.checked) {
-        const { tipo, valor: v, descricao, categoria, meio, banco } = registro;
-        const { error: e3 } = await sb.from('gastos').update({ tipo, valor: v, descricao, categoria, meio, banco })
+        const { tipo, valor: v, descricao, categoria, meio, banco, tags } = registro;
+        const { error: e3 } = await sb.from('gastos').update({ tipo, valor: v, descricao, categoria, meio, banco, tags })
           .eq('recorrencia_grupo', editando.recorrencia_grupo).gt('criado_em', editando.criado_em);
         if (e3) throw e3;
       }
       if (!editando.recorrencia_grupo && !editando.parcela_total && f.repetir.checked) await repetirMensal(editando.id, f.repetir_ate.value);
+      erroFoto = await salvarFoto(editando.id);
     } else {
       const { data, error } = await sb.from('gastos').insert({ ...registro, origem: 'manual' }).select('id').single();
       if (error) throw error;
@@ -1992,9 +2547,11 @@ formLanc.addEventListener('submit', async (ev) => {
       if (n > 1 && registro.meio === 'credito' && saida) await parcelar(data.id, n);
       else if (f.repetir.checked) await repetirMensal(data.id, f.repetir_ate.value);
       if (pendenciaOrigem) await sb.from('pix_nao_reconhecido').delete().eq('id', pendenciaOrigem);
+      erroFoto = await salvarFoto(data.id);
     }
     fecharJanela($('dlg-lanc'));
-    avisar(editando ? 'Lançamento atualizado' : 'Lançamento salvo');
+    if (erroFoto) avisar('Lançamento salvo, mas a foto não subiu: ' + erroFoto, true);
+    else avisar(editando ? 'Lançamento atualizado' : 'Lançamento salvo');
     carregar();
   } catch (e) {
     avisar('Não deu pra salvar: ' + (e.message || e), true);
@@ -2014,7 +2571,7 @@ async function parcelar(id, n) {
   const { error: e1 } = await sb.from('gastos').update({ valor: primeira, parcela_grupo: id, parcela_num: 1, parcela_total: n }).eq('id', id);
   if (e1) throw e1;
   const resto = Array.from({ length: n - 1 }, (_, i) => ({
-    valor: base, descricao: l.descricao, categoria: l.categoria || 'Outros', meio: 'credito', tipo: 'saida', banco: l.banco,
+    valor: base, descricao: l.descricao, categoria: l.categoria || 'Outros', meio: 'credito', tipo: 'saida', banco: l.banco, tags: l.tags || [],
     criado_em: somarMeses(data0, i + 1).toISOString(), parcela_grupo: id, parcela_num: i + 2, parcela_total: n, origem: 'parcela',
   }));
   const { error: e2 } = await sb.from('gastos').insert(resto);
@@ -2030,7 +2587,7 @@ async function repetirMensal(id, ateChave) {
   for (let k = 1; k <= 120; k++) {
     const dk = somarMeses(d0, k);
     if (chaveDia(dk) > ateChave) break;
-    copias.push({ valor: l.valor, descricao: l.descricao, categoria: l.categoria || 'Outros', meio: l.meio, tipo: l.tipo, banco: l.banco,
+    copias.push({ valor: l.valor, descricao: l.descricao, categoria: l.categoria || 'Outros', meio: l.meio, tipo: l.tipo, banco: l.banco, tags: l.tags || [],
       criado_em: dk.toISOString(), recorrencia_grupo: id, origem: 'recorrente' });
   }
   const { error: e1 } = await sb.from('gastos').update({ recorrencia_grupo: id }).eq('id', id);
@@ -2042,8 +2599,10 @@ async function repetirMensal(id, ateChave) {
 $('btn-apagar-prox').addEventListener('click', async (ev) => {
   const b = ev.currentTarget;
   if (!b.dataset.confirmar) { b.dataset.confirmar = '1'; b.textContent = 'Toque de novo pra apagar'; return; }
+  const fotos = estado.todas.filter((x) => x.recorrencia_grupo === editando.recorrencia_grupo && x.criado_em >= editando.criado_em && x.comprovante).map((x) => x.comprovante);
   const { error } = await sb.from('gastos').delete().eq('recorrencia_grupo', editando.recorrencia_grupo).gte('criado_em', editando.criado_em);
   if (error) return avisar('Não deu pra apagar: ' + error.message, true);
+  apagarFotos(fotos);
   fecharJanela($('dlg-lanc'));
   avisar('Este mês e os próximos foram apagados');
   carregar();
@@ -2071,8 +2630,10 @@ $('btn-apagar').addEventListener('click', async (ev) => {
   const q = editando.parcela_grupo
     ? sb.from('gastos').delete().eq('parcela_grupo', editando.parcela_grupo)
     : sb.from('gastos').delete().eq('id', editando.id);
+  const fotos = estado.todas.filter((x) => (editando.parcela_grupo ? x.parcela_grupo === editando.parcela_grupo : x.id === editando.id) && x.comprovante).map((x) => x.comprovante);
   const { error } = await q;
   if (error) return avisar('Não deu pra apagar: ' + error.message, true);
+  apagarFotos(fotos);
   fecharJanela($('dlg-lanc'));
   avisar('Apagado');
   carregar();
@@ -2218,10 +2779,10 @@ $('btn-csv').addEventListener('click', () => {
   const lista = estado.listaVisivel;
   if (!lista.length) return avisar('Não há lançamentos no extrato pra exportar.', true);
   const campo = (v) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-  const cab = ['Data', 'Hora', 'Tipo', 'Valor', 'Sua parte', 'Descrição', 'Categoria', 'Forma', 'Banco', 'Parcela'];
+  const cab = ['Data', 'Hora', 'Tipo', 'Valor', 'Sua parte', 'Descrição', 'Categoria', 'Forma', 'Banco', 'Parcela', 'Tags'];
   const linhas = lista.map((l) => [fmtData.format(l.data), fmtHora.format(l.data), l.tipo === 'entrada' ? 'Entrada' : 'Saída',
     l.valor.toFixed(2).replace('.', ','), parte(l).toFixed(2).replace('.', ','), l.descricao, categoriaDe(l),
-    NOME_MEIO[l.meio] || l.meio, NOME_BANCO[l.banco] || '', l.parcela_total ? `${l.parcela_num}/${l.parcela_total}` : ''].map(campo).join(';'));
+    NOME_MEIO[l.meio] || l.meio, NOME_BANCO[l.banco] || '', l.parcela_total ? `${l.parcela_num}/${l.parcela_total}` : '', l.tags.join(', ')].map(campo).join(';'));
   const csv = '﻿' + [cab.map(campo).join(';'), ...linhas].join('\r\n');
   const url = URL.createObjectURL(new Blob([csv], { type: 'text/csv;charset=utf-8' }));
   const a = h('a', { href: url, download: `gastos-${estado.ano}-${pad(estado.mes)}.csv` });
